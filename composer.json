@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": ">=5.4.0",
-	"flyingpiranhas\\common" : "dev-master"
+	"flyingpiranhas/common" : "dev-master"
     },
     "autoload": {
         "psr-0": {
