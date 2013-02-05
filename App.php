@@ -3,6 +3,7 @@
 namespace flyingpiranhas\mvc;
 
 use flyingpiranhas\common\cache\interfaces\CacheInterface;
+use flyingpiranhas\mvc\interfaces\AppInterface;
 use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
 use flyingpiranhas\common\errorHandling\interfaces\ErrorHandlerInterface;
 use flyingpiranhas\common\session\interfaces\SessionInterface;
@@ -21,7 +22,7 @@ use Exception;
  * @since          2012-09-07
  * @author         Ivan Pintar
  */
-class App
+class App implements AppInterface
 {
 
     /** @var string */
