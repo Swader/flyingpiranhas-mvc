@@ -8,7 +8,7 @@ namespace flyingpiranhas\mvc\views\minify\interfaces;
  *
  * @category       views
  * @package        flyingpiranhas.mvc
- * @license        BSD License
+ * @license        Apache-2.0
  * @version        0.01
  * @since          2012-09-07
  * @author         Ivan Pintar
