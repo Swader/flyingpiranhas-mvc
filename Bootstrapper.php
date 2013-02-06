@@ -50,13 +50,13 @@ class Bootstrapper
         $this->registerMvcDependencies();
         $this->runCustomInit();
 
-        /** @var $oMind App */
-        $oMind = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\interfaces\\AppInterface');
-        $oMind
+        /** @var $oApp App */
+        $oApp = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\interfaces\\AppInterface');
+        $oApp
             ->setAppEnv($this->sAppEnv)
             ->setProjectDir($this->sProjectDir);
 
-        $oMind->work();
+        $oApp->work();
     }
 
     /**  */
