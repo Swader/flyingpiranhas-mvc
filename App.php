@@ -3,6 +3,7 @@
 namespace flyingpiranhas\mvc;
 
 use flyingpiranhas\common\cache\interfaces\CacheInterface;
+use flyingpiranhas\mvc\interfaces\ModuleBootstrapperInterface;
 use flyingpiranhas\mvc\interfaces\AppInterface;
 use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
 use flyingpiranhas\common\errorHandling\interfaces\ErrorHandlerInterface;
@@ -10,7 +11,6 @@ use flyingpiranhas\common\session\interfaces\SessionInterface;
 use flyingpiranhas\common\http\interfaces\RequestInterface;
 use flyingpiranhas\common\http\interfaces\ResponseInterface;
 use flyingpiranhas\mvc\exceptions\MvcException;
-use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\mvc\router\interfaces\AppRouterInterface;
 use Exception;
 
@@ -26,31 +26,34 @@ class App implements AppInterface
 {
 
     /** @var string */
-    protected $sAppEnv = 'production';
-
-    /** @var string */
-    protected $sRoutesIniPath = 'application/config/Routes.ini';
-
-    /** @var string */
     protected $sProjectDir = '';
 
     /** @var string */
-    protected $sModulesDir = 'application/modules';
+    protected $sAppEnv = '';
 
     /** @var string */
-    protected $sViewsDir = 'application/views/scripts';
+    protected $sRoutesIniPath = '';
 
     /** @var string */
-    protected $sLayoutsDir = 'application/views/layouts';
+    protected $sModulesDir = '';
 
     /** @var string */
-    protected $sViewFragmentsDir = 'application/views/fragments';
+    protected $sViewsDir = '';
 
     /** @var string */
-    protected $sDefaultModule = 'home';
+    protected $sLayoutsDir = '';
+
+    /** @var string */
+    protected $sViewFragmentsDir = '';
+
+    /** @var string */
+    protected $sDefaultModule = '';
 
     /** @var array */
     protected $aModuleNamespaces = array();
+
+    /** @var array */
+    protected $aModuleConfigPaths = array();
 
     /** @var CacheInterface */
     protected $oCache;
@@ -173,6 +176,25 @@ class App implements AppInterface
     }
 
     /**
+     * @param array $aAppSettings
+     *
+     * @return App
+     */
+    public function setAppSettings(array $aAppSettings)
+    {
+        if (!$this->sRoutesIniPath) $this->sRoutesIniPath = $aAppSettings['routesIniPath'];
+        if (!$this->sModulesDir) $this->sModulesDir = $aAppSettings['modulesDir'];
+        if (!$this->sViewsDir) $this->sViewsDir = $aAppSettings['viewsDir'];
+        if (!$this->sLayoutsDir) $this->sLayoutsDir = $aAppSettings['layoutsDir'];
+        if (!$this->sViewFragmentsDir) $this->sViewFragmentsDir = $aAppSettings['viewFragmentsDir'];
+        if (!$this->sDefaultModule) $this->sDefaultModule = $aAppSettings['defaultModule'];
+        if (!$this->aModuleNamespaces) $this->aModuleNamespaces = $aAppSettings['moduleNamespaces'];
+        if (!$this->aModuleConfigPaths) $this->aModuleConfigPaths = $aAppSettings['moduleConfigPaths'];
+
+        return $this;
+    }
+
+    /**
      * @param string $sAppEnv
      *
      * @return App
@@ -202,17 +224,6 @@ class App implements AppInterface
     public function setProjectDir($sProjectDir)
     {
         $this->sProjectDir = $sProjectDir;
-        return $this;
-    }
-
-    /**
-     * @param array $aModuleNamespaces
-     *
-     * @return App
-     */
-    public function setModuleNamespaces(array $aModuleNamespaces)
-    {
-        $this->aModuleNamespaces = $aModuleNamespaces;
         return $this;
     }
 
@@ -320,7 +331,7 @@ class App implements AppInterface
             )
         );
 
-        // add routes from the Routes.xml
+        // add routes from the Routes.ini
         $sRoutesIniPath = $this->sProjectDir . '/' . $this->sRoutesIniPath;
         if (is_readable($sRoutesIniPath)) {
             if ($this->oCache->exists($sRoutesIniPath)) {
@@ -340,36 +351,47 @@ class App implements AppInterface
      *
      * @param string $sModuleName
      *
-     * @return Module
+     * @return ModuleBootstrapper
      * @throws MvcException
      */
     public final function findModule($sModuleName)
     {
         if (!isset($this->aModules[$sModuleName])) {
-            $sModuleNamespace = (isset($this->aModuleNamespaces[$sModuleName])) ? $this->aModuleNamespaces[$sModuleName] : $sModuleName;
-            $sModuleDir = $this->sModulesDir . '/' . str_replace('\\', '/', $sModuleNamespace);
+            $sModuleNamespace =
+                (isset($this->aModuleNamespaces[$sModuleName]))
+                    ? $this->aModuleNamespaces[$sModuleName]
+                    : $sModuleName;
 
-            /** @var $oModule ModuleInterface */
-            $oModule = null;
+            $sModuleConfigPath =
+                (isset($this->aModuleConfigPaths[$sModuleName]))
+                    ? $this->aModuleConfigPaths[$sModuleName]
+                    : 'config/Config.ini';
+
+            $sModuleDir = $this->sProjectDir . '/' . $this->sModulesDir . '/' . str_replace('\\', '/', $sModuleNamespace);
+
+            $aBootstrapperParams = array(
+                'sModuleName' => $sModuleName,
+                'sModuleNamespace' => $sModuleNamespace,
+                'sModuleDir' => $sModuleDir,
+                'sAppEnv' => $this->sAppEnv,
+                'sModuleConfigPath' => $sModuleConfigPath
+            );
+
+            /** @var $oModuleBootstrapper ModuleBootstrapperInterface */
+            $oModuleBootstrapper = null;
             try {
-                $sModuleClass = $sModuleNamespace . '\\Module';
-                $oModule = $this->oDIContainer->resolve($sModuleClass);
+                $sModuleClass = $sModuleNamespace . '\\Bootstrapper';
+                $oModuleBootstrapper = $this->oDIContainer->resolve($sModuleClass, $aBootstrapperParams);
             } catch (Exception $oException) {
-                $oModule = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\Module');
+                $oModuleBootstrapper = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\ModuleBootstrapper', $aBootstrapperParams);
             }
 
-            if (!($oModule instanceof ModuleInterface)) {
-                throw new MvcException('The custom module has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleInterface');
+
+            if (!($oModuleBootstrapper instanceof ModuleBootstrapperInterface)) {
+                throw new MvcException('The module bootstrapper has to extend \\flyingpiranhas\\mvc\\ModuleBootstrapper');
             }
 
-            $oModule
-                ->setModuleDir($sModuleDir)
-                ->setModuleName($sModuleName)
-                ->setModuleNamespace($sModuleNamespace);
-
-            $oModule->initModule();
-            $oModule->preDispatch();
-            $this->aModules[$sModuleName] = $oModule;
+            $this->aModules[$sModuleName] = $oModuleBootstrapper;
         }
 
         return $this->aModules[$sModuleName];
@@ -415,8 +437,8 @@ class App implements AppInterface
         $this->preDispatch();
 
         $this->oRouter->parseRequest();
-        $oModule = $this->findModule($this->oRouter->getModule());
-        $oModule->work();
+        $oModuleBootstrapper = $this->findModule($this->oRouter->getModule());
+        $oModuleBootstrapper->run();
 
         $this->postDispatch();
     }

@@ -3,8 +3,6 @@
 namespace flyingpiranhas\mvc;
 
 use flyingpiranhas\common\cache\interfaces\CacheInterface;
-use flyingpiranhas\common\config\Config;
-use flyingpiranhas\common\config\interfaces\ConfigRootInterface;
 use flyingpiranhas\mvc\controller\interfaces\ControllerInterface;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\mvc\router\interfaces\ModuleRouterInterface;
@@ -23,7 +21,7 @@ class Module implements ModuleInterface
 {
 
     /** @var string */
-    protected $sRoutesIniPath = 'config/Routes.ini';
+    protected $sRoutesIniPath = '';
 
     /** @var string */
     protected $sModuleName = '';
@@ -35,22 +33,31 @@ class Module implements ModuleInterface
     protected $sModuleDir = '';
 
     /** @var string */
-    protected $sControllerNamespace = 'controllers';
+    protected $sControllerNamespace = '';
 
     /** @var string */
-    protected $sDefaultController = 'Index';
+    protected $sDefaultController = '';
 
     /** @var string */
-    protected $sDefaultAction = 'index';
+    protected $sDefaultAction = '';
 
     /** @var string */
-    protected $sViewsDir = 'views/scripts';
+    protected $sViewsDir = '';
 
     /** @var string */
-    protected $sLayoutsDir = 'views/layouts';
+    protected $sLayoutsDir = '';
 
     /** @var string */
-    protected $sViewFragmentsDir = 'views/fragments';
+    protected $sViewFragmentsDir = '';
+
+    /** @var App */
+    protected $oApp;
+
+    /** @var CacheInterface */
+    protected $oCache;
+
+    /** @var ModuleRouterInterface */
+    protected $oRouter;
 
     /**
      * @param string $sModuleName
@@ -85,18 +92,6 @@ class Module implements ModuleInterface
         return $this;
     }
 
-    /** @var App */
-    protected $oApp;
-
-    /** @var CacheInterface */
-    protected $oCache;
-
-    /** @var ConfigRootInterface */
-    protected $oConfig;
-
-    /** @var ModuleRouterInterface */
-    protected $oRouter;
-
     /**
      * @return App
      */
@@ -114,19 +109,29 @@ class Module implements ModuleInterface
     }
 
     /**
-     * @return Config
-     */
-    public final function getConfig()
-    {
-        return $this->oConfig;
-    }
-
-    /**
      * @return ModuleRouterInterface
      */
     public final function getRouter()
     {
         return $this->oRouter;
+    }
+
+    /**
+     * @param array $aModuleSettings
+     *
+     * @return App
+     */
+    public function setModuleSettings(array $aModuleSettings)
+    {
+        if (!$this->sRoutesIniPath) $this->sRoutesIniPath = $aModuleSettings['routesIniPath'];
+        if (!$this->sControllerNamespace) $this->sControllerNamespace = $aModuleSettings['controllerNamespace'];
+        if (!$this->sDefaultController) $this->sDefaultController = $aModuleSettings['defaultController'];
+        if (!$this->sDefaultAction) $this->sDefaultAction = $aModuleSettings['defaultAction'];
+        if (!$this->sViewsDir) $this->sViewsDir = $aModuleSettings['viewsDir'];
+        if (!$this->sLayoutsDir) $this->sLayoutsDir = $aModuleSettings['layoutsDir'];
+        if (!$this->sViewFragmentsDir) $this->sViewFragmentsDir = $aModuleSettings['viewFragmentsDir'];
+
+        return $this;
     }
 
     /**
@@ -186,7 +191,7 @@ class Module implements ModuleInterface
         $this->oRouter->setDefaults($aMcaDefaults);
 
         // add routes from the Routes.xml
-        $sRoutesIniPath = $this->oApp->getProjectDir() . '/' . $this->sModuleDir . '/' . $this->sRoutesIniPath;
+        $sRoutesIniPath = $this->sModuleDir . '/' . $this->sRoutesIniPath;
 
         if (is_readable($sRoutesIniPath)) {
             if ($this->oCache->exists($sRoutesIniPath)) {
@@ -209,7 +214,8 @@ class Module implements ModuleInterface
     public final function createController($sControllerName)
     {
         $sProjectDir = $this->oApp->getProjectDir();
-        $sModuleDir = $sProjectDir . '/' . $this->sModuleDir;
+        $sModuleDir = $this->sModuleDir;
+
         $sControllerClass = $this->sModuleNamespace . '\\' . $this->sControllerNamespace . '\\' . ucfirst($sControllerName);
 
         $oHead = $this->oApp->getDIContainer()->resolve('flyingpiranhas\\mvc\\views\\head\\interfaces\\HeadInterface');
@@ -279,6 +285,7 @@ class Module implements ModuleInterface
     {
         // init components
         $this->initRouter();
+        return $this;
     }
 
     /**

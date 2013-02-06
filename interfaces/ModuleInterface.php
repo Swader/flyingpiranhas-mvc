@@ -34,10 +34,26 @@ interface ModuleInterface
      */
     public function setModuleDir($sModuleDir);
 
+    /**
+     * @param array $aModuleSettings
+     *
+     * @return ModuleInterface
+     */
+    public function setModuleSettings(array $aModuleSettings);
+
+    /**
+     * @return ModuleInterface
+     */
     public function initModule();
 
+    /**
+     * @return ModuleInterface
+     */
     public function preDispatch();
 
+    /**
+     * @return ModuleInterface
+     */
     public function work();
 
 }

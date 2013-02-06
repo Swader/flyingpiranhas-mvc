@@ -16,15 +16,22 @@ interface AppInterface
     /**
      * @param string $sAppEnv
      *
-     * @return mixed
+     * @return AppInterface
      */
     public function setAppEnv($sAppEnv);
 
     /**
      * @param string $sProjectDir
      *
-     * @return mixed
+     * @return AppInterface
      */
     public function setProjectDir($sProjectDir);
+
+    /**
+     * @param array $aAppSettings
+     *
+     * @return AppInterface
+     */
+    public function setAppSettings(array $aAppSettings);
 
 }

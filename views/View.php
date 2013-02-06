@@ -140,7 +140,7 @@ class View implements ViewInterface, ContentInterface
     private function renderLayout()
     {
         if (is_readable($this->sLayout)) {
-            include $this->sLayout;
+            include trim($this->sLayout, '.php') . '.php';
         } else {
             foreach ($this->aLayoutsIncludePath as $sDir) {
                 if (is_readable($sDir . '/' . (rtrim($this->sLayout, '.php')) . '.php')) {
@@ -251,10 +251,11 @@ class View implements ViewInterface, ContentInterface
     protected function renderView()
     {
         if (is_readable($this->sView)) {
-            include $this->sView;
+            include rtrim($this->sView, '.php') . '.php';
         } else {
             foreach ($this->aViewsIncludePath as $sDir) {
                 $sDir = ($sDir) ? $sDir : '.';
+
                 if (is_readable($sDir . '/' . (rtrim($this->sView, '.php')) . '.php')) {
                     include $sDir . '/' . (rtrim($this->sView, '.php')) . '.php';
                     break;

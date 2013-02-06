@@ -42,12 +42,16 @@ class ErrorHandler extends BaseErrorHandler
     private $sView = 'default';
 
     /** @var string */
+    private $sLayout = 'layout';
+
+    /** @var string */
     private $sErrorViewDir = '';
 
-    /**
-     * @var RequestInterface
-     */
+    /** @var RequestInterface */
     private $oRequest;
+
+    /** @var array */
+    private $aErrorViewMap = array();
 
     /**
      * @param RequestInterface $oRequest
@@ -88,31 +92,44 @@ class ErrorHandler extends BaseErrorHandler
      * Views need to exist as php files in the directory set in config.ini (dirs.errorViews), default is application_dir/views/errors,
      * If a view with a name identical to the given error code exists, that view will be used.
      *
-     * @param string $sSlug
+     * @param string $sView
      *
      * @return ErrorHandler
      */
-    public function setView($sSlug)
+    public function setView($sView)
     {
-        $this->sView = $sSlug;
+        $this->sView = $sView;
         return $this;
     }
 
     /**
-     * Displays the error and dies the application
+     * @param string $sLayout
+     *
+     * @return ErrorHandler
+     */
+    public function setLayout($sLayout)
+    {
+        $this->sLayout = $sLayout;
+        return $this;
+    }
+
+    /**
+     * Displays the error and exits the application
      */
     public function show()
     {
         ob_end_clean();
 
-        if (!$this->sView || is_readable($this->sErrorViewDir . '/' . $this->oException->getCode() . '.php')) {
-            $this->setView($this->oException->getCode());
-        }
         if (!headers_sent()) {
             header('HTTP/1.1 404 Not Found');
         }
 
-        include_once $this->sErrorViewDir . '/layout.php';
+        $sLayout = $this->sErrorViewDir . '/' . $this->sLayout . '.php';
+        if (is_readable($sLayout)) {
+            $this->renderLayout();
+        } else {
+            $this->renderView();
+        }
         exit();
     }
 
@@ -129,5 +146,21 @@ class ErrorHandler extends BaseErrorHandler
         $this->show();
     }
 
+    /**  */
+    private function renderLayout()
+    {
+        include $this->sErrorViewDir . '/' . $this->sLayout . '.php';
+    }
+
+    /**  */
+    private function renderView()
+    {
+        $sView = $this->sView;
+        if (is_readable($this->sErrorViewDir . '/' . $this->oException->getCode() . '.php')) {
+            $sView = $this->oException->getCode();
+        }
+
+        include $this->sErrorViewDir . '/' . $sView . '.php';
+    }
 }
 
