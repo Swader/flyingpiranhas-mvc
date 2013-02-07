@@ -71,7 +71,7 @@ abstract class RouterAbstract
     /**
      * Adds multiple routes from an array or a SimpleXMLElement build from the Routes.xml
      *
-     * @param array $mRoutes
+     * @param array|string $mRoutes
      *
      * @return RouterAbstract
      * @throws RouterException

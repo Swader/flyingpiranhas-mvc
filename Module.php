@@ -2,12 +2,13 @@
 
 namespace flyingpiranhas\mvc;
 
-use flyingpiranhas\common\cache\interfaces\CacheInterface;
 use flyingpiranhas\mvc\controller\interfaces\ControllerInterface;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\mvc\router\interfaces\ModuleRouterInterface;
 use flyingpiranhas\mvc\views\interfaces\ViewInterface;
 use flyingpiranhas\common\http\Params;
+use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
+use flyingpiranhas\mvc\interfaces\AppInterface;
 
 /**
  * @category       mvc
@@ -19,9 +20,6 @@ use flyingpiranhas\common\http\Params;
  */
 class Module implements ModuleInterface
 {
-
-    /** @var string */
-    protected $sRoutesIniPath = '';
 
     /** @var string */
     protected $sModuleName = '';
@@ -50,14 +48,30 @@ class Module implements ModuleInterface
     /** @var string */
     protected $sViewFragmentsDir = '';
 
-    /** @var App */
+    /** @var AppInterface */
     protected $oApp;
 
-    /** @var CacheInterface */
-    protected $oCache;
+    /** @var DIContainerInterface */
+    protected $oDIContainer;
 
     /** @var ModuleRouterInterface */
     protected $oRouter;
+
+    /**
+     * @return ModuleRouterInterface
+     */
+    public final function getRouter()
+    {
+        return $this->oRouter;
+    }
+
+    /**
+     * @return AppInterface
+     */
+    public final function getApp()
+    {
+        return $this->oApp;
+    }
 
     /**
      * @param string $sModuleName
@@ -93,37 +107,12 @@ class Module implements ModuleInterface
     }
 
     /**
-     * @return App
-     */
-    public final function getApp()
-    {
-        return $this->oApp;
-    }
-
-    /**
-     * @return CacheInterface
-     */
-    public final function getCache()
-    {
-        return $this->oCache;
-    }
-
-    /**
-     * @return ModuleRouterInterface
-     */
-    public final function getRouter()
-    {
-        return $this->oRouter;
-    }
-
-    /**
      * @param array $aModuleSettings
      *
      * @return App
      */
     public function setModuleSettings(array $aModuleSettings)
     {
-        if (!$this->sRoutesIniPath) $this->sRoutesIniPath = $aModuleSettings['routesIniPath'];
         if (!$this->sControllerNamespace) $this->sControllerNamespace = $aModuleSettings['controllerNamespace'];
         if (!$this->sDefaultController) $this->sDefaultController = $aModuleSettings['defaultController'];
         if (!$this->sDefaultAction) $this->sDefaultAction = $aModuleSettings['defaultAction'];
@@ -137,26 +126,13 @@ class Module implements ModuleInterface
     /**
      * @dependency
      *
-     * @param App $oApp
+     * @param DIContainerInterface $oDIContainer
      *
      * @return Module
      */
-    public final function setApp(App $oApp)
+    public final function setDIContainer(DIContainerInterface $oDIContainer)
     {
-        $this->oApp = $oApp;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param CacheInterface $oCache
-     *
-     * @return Module
-     */
-    public final function setCache(CacheInterface $oCache)
-    {
-        $this->oCache = $oCache;
+        $this->oDIContainer = $oDIContainer;
         return $this;
     }
 
@@ -173,34 +149,17 @@ class Module implements ModuleInterface
         return $this;
     }
 
-
     /**
-     * Initializes the router,
-     * fills it with the required info from the config object.
+     * @dependency
+     *
+     * @param AppInterface $oApp
+     *
+     * @return Module
      */
-    private function initRouter()
+    public final function setApp(AppInterface $oApp)
     {
-        // setup the default module/controller/action
-        $aMcaDefaults = array(
-            'module' => $this->sModuleName,
-            'controller' => $this->sDefaultController,
-            'action' => $this->sDefaultAction
-        );
-
-        // init router
-        $this->oRouter->setDefaults($aMcaDefaults);
-
-        // add routes from the Routes.xml
-        $sRoutesIniPath = $this->sModuleDir . '/' . $this->sRoutesIniPath;
-
-        if (is_readable($sRoutesIniPath)) {
-            if ($this->oCache->exists($sRoutesIniPath)) {
-                $this->oRouter->addRoutes($this->oCache->get($sRoutesIniPath));
-            } else {
-                $this->oRouter->addRoutes($sRoutesIniPath);
-                $this->oCache->set($sRoutesIniPath, $this->oRouter->getRoutes());
-            }
-        }
+        $this->oApp = $oApp;
+        return $this;
     }
 
     /**
@@ -211,34 +170,38 @@ class Module implements ModuleInterface
      *
      * @return ControllerInterface
      */
-    public final function createController($sControllerName)
+    private final function findController($sControllerName)
     {
-        $sProjectDir = $this->oApp->getProjectDir();
+        /** @var $oApp AppInterface */
+        $oApp = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\interfaces\\AppInterface');
+
+        $sProjectDir = $oApp->getProjectDir();
         $sModuleDir = $this->sModuleDir;
 
         $sControllerClass = $this->sModuleNamespace . '\\' . $this->sControllerNamespace . '\\' . ucfirst($sControllerName);
 
-        $oHead = $this->oApp->getDIContainer()->resolve('flyingpiranhas\\mvc\\views\\head\\interfaces\\HeadInterface');
-        $oController = $this->oApp->getDIContainer()->resolve($sControllerClass);
+        $oHead = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\views\\head\\interfaces\\HeadInterface');
+        $oController = $this->oDIContainer->resolve($sControllerClass);
         $oController->setViewSettings(
             array(
                  'oHead' => $oHead,
                  'aLayoutsIncludePath' => array(
                      $sModuleDir . '/' . $this->sLayoutsDir,
-                     $sProjectDir . '/' . $this->oApp->getLayoutsDir(),
+                     $sProjectDir . '/' . $oApp->getLayoutsDir(),
                  ),
                  'aViewsIncludePath' => array(
                      $sModuleDir . '/' . $this->sViewsDir . '/' . lcfirst($oController->getViewsDir()),
                      $sModuleDir . '/' . $this->sViewsDir,
-                     $sProjectDir . '/' . $this->oApp->getViewsDir(),
+                     $sProjectDir . '/' . $oApp->getViewsDir(),
                  ),
                  'aFragmentsIncludePath' => array(
                      $sModuleDir . '/' . $this->sViewFragmentsDir,
-                     $sProjectDir . '/' . $this->oApp->getViewFragmentsDir(),
+                     $sProjectDir . '/' . $oApp->getViewFragmentsDir(),
                  ),
             )
         );
 
+        $oController->setModule($this);
         return $oController;
     }
 
@@ -249,11 +212,11 @@ class Module implements ModuleInterface
      *
      * @return ViewInterface
      */
-    public final function createView($sAction, $sControllerName = null, Params $aParams = null)
+    public final function findView($sAction, $sControllerName = null, Params $aParams = null)
     {
         $sControllerName = ($sControllerName) ? $sControllerName : $this->oRouter->getController();
 
-        $oController = $this->createController($sControllerName);
+        $oController = $this->findController($sControllerName);
 
         return $oController->runAction($sAction, $aParams);
     }
@@ -269,23 +232,12 @@ class Module implements ModuleInterface
         $this->oRouter->parseRequest();
 
         // dispatch
-        $oView = $this->createView($this->oRouter->getAction(), $this->oRouter->getController());
+        $oView = $this->findView($this->oRouter->getAction(), $this->oRouter->getController());
 
         // render
-        $this->oApp->getResponse()->setContent($oView);
-        $this->oApp->getResponse()->send();
-    }
-
-    /**
-     * This is called by the App right after a module is first created.
-     * Initializes the Config and Router and registers dbAdapter classes
-     * and calls the user defined preDispatch()
-     */
-    public final function initModule()
-    {
-        // init components
-        $this->initRouter();
-        return $this;
+        $oResponse = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\ResponseInterface');
+        $oResponse->setContent($oView);
+        $oResponse->send();
     }
 
     /**

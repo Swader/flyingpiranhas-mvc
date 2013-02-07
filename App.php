@@ -2,16 +2,12 @@
 
 namespace flyingpiranhas\mvc;
 
-use flyingpiranhas\common\cache\interfaces\CacheInterface;
-use flyingpiranhas\mvc\interfaces\ModuleBootstrapperInterface;
 use flyingpiranhas\mvc\interfaces\AppInterface;
 use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
-use flyingpiranhas\common\errorHandling\interfaces\ErrorHandlerInterface;
-use flyingpiranhas\common\session\interfaces\SessionInterface;
-use flyingpiranhas\common\http\interfaces\RequestInterface;
-use flyingpiranhas\common\http\interfaces\ResponseInterface;
 use flyingpiranhas\mvc\exceptions\MvcException;
 use flyingpiranhas\mvc\router\interfaces\AppRouterInterface;
+use flyingpiranhas\mvc\interfaces\ModuleBootstrapperInterface;
+use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use Exception;
 
 /**
@@ -30,9 +26,6 @@ class App implements AppInterface
 
     /** @var string */
     protected $sAppEnv = '';
-
-    /** @var string */
-    protected $sRoutesIniPath = '';
 
     /** @var string */
     protected $sModulesDir = '';
@@ -54,21 +47,6 @@ class App implements AppInterface
 
     /** @var array */
     protected $aModuleConfigPaths = array();
-
-    /** @var CacheInterface */
-    protected $oCache;
-
-    /** @var SessionInterface */
-    protected $oSession;
-
-    /** @var RequestInterface */
-    protected $oRequest;
-
-    /** @var ResponseInterface */
-    protected $oResponse;
-
-    /** @var ErrorHandlerInterface */
-    protected $oErrorHandler;
 
     /** @var AppRouterInterface */
     protected $oRouter;
@@ -120,46 +98,6 @@ class App implements AppInterface
     }
 
     /**
-     * @return CacheInterface
-     */
-    public final function getCache()
-    {
-        return $this->oCache;
-    }
-
-    /**
-     * @return SessionInterface
-     */
-    public final function getSession()
-    {
-        return $this->oSession;
-    }
-
-    /**
-     * @return RequestInterface
-     */
-    public final function getRequest()
-    {
-        return $this->oRequest;
-    }
-
-    /**
-     * @return ResponseInterface
-     */
-    public final function getResponse()
-    {
-        return $this->oResponse;
-    }
-
-    /**
-     * @return ErrorHandlerInterface
-     */
-    public final function getErrorHandler()
-    {
-        return $this->oErrorHandler;
-    }
-
-    /**
      * @return AppRouterInterface
      */
     public final function getRouter()
@@ -182,7 +120,6 @@ class App implements AppInterface
      */
     public function setAppSettings(array $aAppSettings)
     {
-        if (!$this->sRoutesIniPath) $this->sRoutesIniPath = $aAppSettings['routesIniPath'];
         if (!$this->sModulesDir) $this->sModulesDir = $aAppSettings['modulesDir'];
         if (!$this->sViewsDir) $this->sViewsDir = $aAppSettings['viewsDir'];
         if (!$this->sLayoutsDir) $this->sLayoutsDir = $aAppSettings['layoutsDir'];
@@ -206,17 +143,6 @@ class App implements AppInterface
     }
 
     /**
-     * @param string $sRoutesIniPath
-     *
-     * @return App
-     */
-    public function setRoutesIniPath($sRoutesIniPath)
-    {
-        $this->sRoutesIniPath = $sRoutesIniPath;
-        return $this;
-    }
-
-    /**
      * @param string $sProjectDir
      *
      * @return App
@@ -224,71 +150,6 @@ class App implements AppInterface
     public function setProjectDir($sProjectDir)
     {
         $this->sProjectDir = $sProjectDir;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param CacheInterface $oCache
-     *
-     * @return App
-     */
-    public final function setCache(CacheInterface $oCache)
-    {
-        $this->oCache = $oCache;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param SessionInterface $oSession
-     *
-     * @return App
-     */
-    public final function setSession(SessionInterface $oSession)
-    {
-        $this->oSession = $oSession;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param RequestInterface $oRequest
-     *
-     * @return App
-     */
-    public final function setRequest(RequestInterface $oRequest)
-    {
-        $this->oRequest = $oRequest;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param ResponseInterface $oResponse
-     *
-     * @return App
-     */
-    public final function setResponse(ResponseInterface $oResponse)
-    {
-        $this->oResponse = $oResponse;
-        return $this;
-    }
-
-    /**
-     * @dependency
-     *
-     * @param ErrorHandlerInterface $oErrorHandler
-     *
-     * @return App
-     */
-    public final function setErrorHandler(ErrorHandlerInterface $oErrorHandler)
-    {
-        $this->oErrorHandler = $oErrorHandler;
         return $this;
     }
 
@@ -320,38 +181,12 @@ class App implements AppInterface
     }
 
     /**
-     * Initializes the router,
-     * fills it with the required info from the config object.
-     */
-    protected final function initRouter()
-    {
-        $this->oRouter->setDefaults(
-            array(
-                 'module' => $this->sDefaultModule
-            )
-        );
-
-        // add routes from the Routes.ini
-        $sRoutesIniPath = $this->sProjectDir . '/' . $this->sRoutesIniPath;
-        if (is_readable($sRoutesIniPath)) {
-            if ($this->oCache->exists($sRoutesIniPath)) {
-                $this->oRouter->addRoutes($this->oCache->get($sRoutesIniPath));
-            } else {
-                $this->oRouter->addRoutes($sRoutesIniPath);
-                $this->oCache->set($sRoutesIniPath, $this->oRouter->getRoutes());
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * Creates a Module for the given module name,
      * fills it with the required info and returns.
      *
      * @param string $sModuleName
      *
-     * @return ModuleBootstrapper
+     * @return ModuleInterface
      * @throws MvcException
      */
     public final function findModule($sModuleName)
@@ -388,10 +223,10 @@ class App implements AppInterface
 
 
             if (!($oModuleBootstrapper instanceof ModuleBootstrapperInterface)) {
-                throw new MvcException('The module bootstrapper has to extend \\flyingpiranhas\\mvc\\ModuleBootstrapper');
+                throw new MvcException('The module bootstrapper has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleBootstrapperInterface');
             }
 
-            $this->aModules[$sModuleName] = $oModuleBootstrapper;
+            $this->aModules[$sModuleName] = $oModuleBootstrapper->findModule();
         }
 
         return $this->aModules[$sModuleName];
@@ -414,31 +249,16 @@ class App implements AppInterface
     }
 
     /**
-     * Called internally to initialize the components when processing a request
-     */
-    private function initApp()
-    {
-        // init components
-        $this->oErrorHandler->register();
-
-        $this->initRouter();
-
-        // start session
-        $this->oSession->registerAndStart();
-    }
-
-    /**
      * Parses the request to find out the module.
      * It then creates a Module and calls its work() method
      */
     public final function work()
     {
-        $this->initApp();
         $this->preDispatch();
 
         $this->oRouter->parseRequest();
-        $oModuleBootstrapper = $this->findModule($this->oRouter->getModule());
-        $oModuleBootstrapper->run();
+        $oModule = $this->findModule($this->oRouter->getModule());
+        $oModule->work();
 
         $this->postDispatch();
     }

@@ -50,9 +50,6 @@ class ErrorHandler extends BaseErrorHandler
     /** @var RequestInterface */
     private $oRequest;
 
-    /** @var array */
-    private $aErrorViewMap = array();
-
     /**
      * @param RequestInterface $oRequest
      * @param string           $sAppEnv

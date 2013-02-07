@@ -3,6 +3,7 @@
 namespace flyingpiranhas\mvc\controller\abstracts;
 
 use flyingpiranhas\common\http\interfaces\RequestInterface;
+use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\common\http\Params;
 use BadMethodCallException;
 use flyingpiranhas\common\http\Request;
@@ -44,6 +45,9 @@ abstract class ControllerAbstract implements ControllerInterface
     /** @var string */
     private $sViewsDir;
 
+    /** @var ModuleInterface */
+    private $oModule;
+
     /**
      * @return SessionInterface
      */
@@ -75,6 +79,14 @@ abstract class ControllerAbstract implements ControllerInterface
     {
         $aClassName = explode('\\', get_class($this));
         return ($this->sViewsDir) ? $this->sViewsDir : array_pop($aClassName);
+    }
+
+    /**
+     * @return ModuleInterface
+     */
+    public function getModule()
+    {
+        return $this->oModule;
     }
 
     /**
@@ -128,6 +140,17 @@ abstract class ControllerAbstract implements ControllerInterface
     }
 
     /**
+     * @param ModuleInterface $oModule
+     *
+     * @return ControllerAbstract
+     */
+    public function setModule(ModuleInterface $oModule)
+    {
+        $this->oModule = $oModule;
+        return $this;
+    }
+
+    /**
      * Override this method to execute operations in the controller preDispatch,
      * right before the action is triggered
      */
@@ -174,6 +197,7 @@ abstract class ControllerAbstract implements ControllerInterface
         $aFunctionParams = $rFunctionReference->getParameters();
 
         $aParams = array();
+
         foreach ($aFunctionParams as $oActionParam) {
             $mParam = null;
             if (!$oActionParam->isOptional() && !isset($aGetParams[$oActionParam->name])) {
@@ -187,13 +211,13 @@ abstract class ControllerAbstract implements ControllerInterface
         }
 
         $oView = call_user_func_array(array($this, $sAction), $aParams);
-        $oView->setHead($this->aViewSettings['oHead']);
-        $oView->setLayoutsIncludePath($this->aViewSettings['aLayoutsIncludePath']);
-        $oView->setViewsIncludePath($this->aViewSettings['aViewsIncludePath']);
-        $oView->setFragmentsIncludePath($this->aViewSettings['aFragmentsIncludePath']);
 
-        if ($oView->getView() === null) {
-            $oView->setView($sActionName);
+        if ($oView instanceof ViewInterface) {
+            if (!$oView->getHead()) $oView->setHead($this->aViewSettings['oHead']);
+            if (!$oView->getLayoutsIncludePath()) $oView->setLayoutsIncludePath($this->aViewSettings['aLayoutsIncludePath']);
+            if (!$oView->getViewsIncludePath()) $oView->setViewsIncludePath($this->aViewSettings['aViewsIncludePath']);
+            if (!$oView->getFragmentsIncludePath()) $oView->setFragmentsIncludePath($this->aViewSettings['aFragmentsIncludePath']);
+            if ($oView->getView() === null) $oView->setView($sActionName);
         }
 
         $this->postDispatch();

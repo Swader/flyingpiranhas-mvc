@@ -80,6 +80,18 @@ interface ViewInterface
     public function setViewsIncludePath(array $aViewsIncludePath);
 
     /**
+     * @return array
+     */
+    public function getFragmentsIncludePath();
+
+    /**
+     * @param array $aFragmentsIncludePath
+     *
+     * @return ViewInterface
+     */
+    public function setFragmentsIncludePath(array $aFragmentsIncludePath);
+
+    /**
      * @return string
      */
     public function getContents();

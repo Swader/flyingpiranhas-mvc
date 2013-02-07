@@ -37,7 +37,4 @@ interface ModuleBootstrapperInterface
      */
     public function findModule();
 
-    /**  */
-    public function run();
-
 }

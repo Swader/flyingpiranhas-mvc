@@ -3,6 +3,7 @@
 namespace flyingpiranhas\mvc;
 
 use SessionHandler;
+use flyingpiranhas\mvc\router\AppRouter;
 use flyingpiranhas\common\config\ConfigRoot;
 use flyingpiranhas\common\dependencyInjection\DIContainer;
 use flyingpiranhas\common\session\Session;
@@ -10,6 +11,7 @@ use flyingpiranhas\common\http\Response;
 use flyingpiranhas\common\http\Request;
 use flyingpiranhas\mvc\errorHandling\ErrorHandler;
 use flyingpiranhas\common\http\interfaces\RequestInterface;
+use flyingpiranhas\common\http\interfaces\ResponseInterface;
 
 /**
  * The bootstrapper registers the dependencies that the mvc uses.
@@ -47,9 +49,7 @@ class Bootstrapper
         'viewFragmentsDir' => 'application/views/fragments',
         'errorViewsDir' => 'application/views/errors',
 
-        'defaultModule' => 'home',
-        'defaultController' => 'controller',
-        'defaultAction' => 'action',
+        'defaultModule' => 'home'
     );
 
     /** @var DIContainer */
@@ -88,8 +88,7 @@ class Bootstrapper
         $this->initRequestResponse();
         $this->initErrorHandler();
         $this->initSession();
-        $this->initCache();
-        $this->initRouters();
+        $this->initRouter();
         $this->initView();
         $this->initApp();
         $this->runCustomInit();
@@ -102,16 +101,6 @@ class Bootstrapper
             ->setAppSettings($this->aAppSettings);
 
         $oApp->work();
-    }
-
-    /**  */
-    protected function initCache()
-    {
-        $this->oDIContainer->registerClass(
-            'flyingpiranhas\\common\\cache\\ArrayCache',
-            'flyingpiranhas\\common\\cache\\interfaces\\CacheInterface',
-            DIContainer::SHARED_INSTANCE
-        );
     }
 
     /**  */
@@ -142,17 +131,36 @@ class Bootstrapper
     }
 
     /**  */
-    protected function initRouters()
+    protected function initRouter()
     {
-        $this->oDIContainer->registerClass(
-            'flyingpiranhas\\mvc\\router\\AppRouter',
-            'flyingpiranhas\\mvc\\router\\interfaces\\AppRouterInterface',
-            DIContainer::SHARED_INSTANCE
+        /** @var $oRequest RequestInterface */
+        $oRequest = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\RequestInterface');
+
+        /** @var $oResponse ResponseInterface */
+        $oResponse = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\ResponseInterface');
+
+        // setup the default module
+        $aMcaDefaults = array(
+            'module' => $this->aAppSettings['defaultModule']
         );
 
-        $this->oDIContainer->registerClass(
-            'flyingpiranhas\\mvc\\router\\ModuleRouter',
-            'flyingpiranhas\\mvc\\router\\interfaces\\ModuleRouterInterface',
+        // add routes from the Routes.ini
+        $sRoutesIniPath = $this->sProjectDir . '/' . trim($this->aAppSettings['routesIniPath'], '.ini') . '.ini';
+
+
+        $oClosure = function () use ($oRequest, $oResponse, $aMcaDefaults, $sRoutesIniPath) {
+            $oRouter = new AppRouter($oRequest, $oResponse);
+            $oRouter->setDefaults($aMcaDefaults);
+
+            if (is_readable($sRoutesIniPath)) {
+                $oRouter->setDefaults($sRoutesIniPath);
+            }
+            return $oRouter;
+        };
+
+        $this->oDIContainer->registerClosure(
+            $oClosure,
+            'flyingpiranhas\\mvc\\router\\interfaces\\AppRouterInterface',
             DIContainer::NEW_INSTANCE
         );
     }

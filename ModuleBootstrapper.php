@@ -3,6 +3,10 @@
 namespace flyingpiranhas\mvc;
 
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
+use flyingpiranhas\mvc\router\ModuleRouter;
+use flyingpiranhas\common\dependencyInjection\DIContainer;
+use flyingpiranhas\common\http\interfaces\RequestInterface;
+use flyingpiranhas\common\http\interfaces\ResponseInterface;
 use flyingpiranhas\mvc\interfaces\ModuleBootstrapperInterface;
 use flyingpiranhas\mvc\exceptions\MvcException;
 use Exception;
@@ -83,6 +87,7 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
         $this->parseConfig($sModuleConfigPath);
     }
 
+
     /**
      * @return ModuleInterface
      * @throws MvcException
@@ -90,6 +95,7 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
     public final function findModule()
     {
         if (!$this->oModule) {
+            $this->initRouter();
             $this->runCustomInit();
 
             /** @var $oModule ModuleInterface */
@@ -110,7 +116,6 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
                 ->setModuleName($this->sModuleName)
                 ->setModuleNamespace($this->sModuleNamespace)
                 ->setModuleSettings($this->aModuleSettings)
-                ->initModule()
                 ->preDispatch();
             $this->oModule = $oModule;
         }
@@ -118,9 +123,39 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
     }
 
     /**  */
-    public function run()
+    protected function initRouter()
     {
-        $this->findModule()->work();
+        /** @var $oRequest RequestInterface */
+        $oRequest = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\RequestInterface');
+
+        /** @var $oResponse ResponseInterface */
+        $oResponse = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\ResponseInterface');
+
+        // setup the default controller/action
+        $aMcaDefaults = array(
+            'module' => $this->sModuleName,
+            'controller' => $this->aModuleSettings['defaultController'],
+            'action' => $this->aModuleSettings['defaultAction']
+        );
+
+        // add routes from the Routes.ini
+        $sRoutesIniPath = $this->sModuleDir . '/' . trim($this->aModuleSettings['routesIniPath'], '.ini') . '.ini';
+
+        $oClosure = function () use ($oRequest, $oResponse, $aMcaDefaults, $sRoutesIniPath) {
+            $oRouter = new ModuleRouter($oRequest, $oResponse);
+            $oRouter->setDefaults($aMcaDefaults);
+
+            if (is_readable($sRoutesIniPath)) {
+                $oRouter->addRoutes($sRoutesIniPath);
+            }
+            return $oRouter;
+        };
+
+        $this->oDIContainer->registerClosure(
+            $oClosure,
+            'flyingpiranhas\\mvc\\router\\interfaces\\ModuleRouterInterface',
+            DIContainer::SHARED_INSTANCE
+        );
     }
 
     /**  */

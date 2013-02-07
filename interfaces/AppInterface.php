@@ -14,6 +14,33 @@ interface AppInterface
 {
 
     /**
+     * @return string
+     */
+    public function getProjectDir();
+
+    /**
+     * @return string
+     */
+    public function getLayoutsDir();
+
+    /**
+     * @return string
+     */
+    public function getViewsDir();
+
+    /**
+     * @return string
+     */
+    public function getViewFragmentsDir();
+
+    /**
+     * @param string $sModuleName
+     *
+     * @return ModuleInterface
+     */
+    public function findModule($sModuleName);
+
+    /**
      * @param string $sAppEnv
      *
      * @return AppInterface
