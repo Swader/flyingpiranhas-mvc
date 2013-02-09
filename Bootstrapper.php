@@ -47,7 +47,7 @@ class Bootstrapper
         'viewsDir' => 'application/views/scripts',
         'layoutsDir' => 'application/views/layouts',
         'viewFragmentsDir' => 'application/views/fragments',
-        'errorViewsDir' => 'application/views/errors',
+        'errorViewsDir' => 'application\views\errors',
 
         'defaultModule' => 'home'
     );

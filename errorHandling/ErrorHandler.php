@@ -156,8 +156,16 @@ class ErrorHandler extends BaseErrorHandler
         if (is_readable($this->sErrorViewDir . '/' . $this->oException->getCode() . '.php')) {
             $sView = $this->oException->getCode();
         }
-
-        include $this->sErrorViewDir . '/' . $sView . '.php';
+        $sFullPath = $this->sErrorViewDir . '/' . $sView . '.php';
+        $e = $this->oException;
+        if (is_readable($sFullPath)) {
+            include $sFullPath;
+        } else {
+            exit(
+            'An error has occured, but you have no default error view template to display it.
+            Please create the following file: '.$sFullPath.'<br />For more information,
+            see the mvc.ErrorHandler documentation online.');
+        }
     }
 }
 
