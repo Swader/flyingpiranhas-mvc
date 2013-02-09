@@ -25,9 +25,6 @@ abstract class RouterAbstract
     /** @var array */
     protected $aRoutes = array();
 
-    /** @var array */
-    protected $aRedirects = array();
-
     /** @var string */
     protected $sModule = '';
 
@@ -65,7 +62,24 @@ abstract class RouterAbstract
      */
     public function getRoutes()
     {
-        return array_merge($this->aRedirects, $this->aRoutes);
+        return array_merge($this->aRoutes);
+    }
+
+    /**
+     * @param Route $oRoute
+     *
+     * @return RouterAbstract
+     * @throws RouterException
+     */
+    public function addRoute(Route $oRoute)
+    {
+        if (isset($this->aRoutes[$oRoute->getFrom()])) {
+            throw new RouterException('Route for: ' . $oRoute->getFrom() . ' alredy set');
+        }
+
+        $this->aRoutes[$oRoute->getFrom()] = $oRoute;
+
+        return $this;
     }
 
     /**
@@ -80,11 +94,7 @@ abstract class RouterAbstract
     {
         if (is_array($mRoutes)) {
             foreach ($mRoutes as $sName => $oRoute) {
-                if ($oRoute instanceof Route) {
-                    $this->aRoutes[$sName] = $oRoute;
-                } else if ($oRoute instanceof Redirect) {
-                    $this->aRedirects[$sName] = $oRoute;
-                }
+                $this->addRoute($oRoute);
             }
         } else if (is_string($mRoutes)) {
             $this->buildRoutesFromIni($mRoutes);
@@ -143,8 +153,8 @@ abstract class RouterAbstract
     protected function redirect($sUrl, $sQueryString)
     {
         /** @var $oRedirect Redirect */
-        foreach ($this->aRedirects as $oRedirect) {
-            if ($oRedirect->urlMatches($sUrl)) {
+        foreach ($this->aRoutes as $oRedirect) {
+            if ($oRedirect instanceof Redirect && $oRedirect->urlMatches($sUrl)) {
                 $sNewUrl = $oRedirect->getNewUrl($sUrl) . (($sQueryString) ? '?' . $sQueryString : '');
                 $this->oResponse->redirect($sNewUrl, $oRedirect->getHeader());
             }
@@ -167,7 +177,7 @@ abstract class RouterAbstract
 
         /** @var $oRoute Route */
         foreach ($this->aRoutes as $oRoute) {
-            if ($oRoute->urlMatches($sUrl)) {
+            if (!($oRoute instanceof Redirect) && $oRoute->urlMatches($sUrl)) {
                 return $this->route($oRoute->getNewUrl($sUrl));
             }
         }
@@ -212,10 +222,11 @@ abstract class RouterAbstract
         foreach ($aRoutes as $sType => $aRoute) {
             foreach ($aRoute as $sName => $aValues) {
                 if ($sType == 'redirects') {
-                    $this->aRedirects[$sName] = new Redirect($sName, $aValues);
+                    $oRoute = new Redirect($sName, $aValues);
                 } else {
-                    $this->aRoutes[$sName] = new Route($sName, $aValues);
+                    $oRoute = new Route($sName, $aValues);
                 }
+                $this->addRoute($oRoute);
             }
 
         }

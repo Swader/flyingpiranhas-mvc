@@ -40,6 +40,30 @@ class Route
     }
 
     /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->sName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFrom()
+    {
+        return $this->sFrom;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTo()
+    {
+        return $this->sTo;
+    }
+
+    /**
      * @param string $sName
      *
      * @return Route
