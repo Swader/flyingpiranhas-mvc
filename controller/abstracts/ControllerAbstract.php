@@ -12,6 +12,7 @@ use flyingpiranhas\common\session\interfaces\SessionInterface;
 use flyingpiranhas\mvc\controller\exceptions\ControllerException;
 use flyingpiranhas\mvc\controller\interfaces\ControllerInterface;
 use flyingpiranhas\mvc\views\interfaces\ViewInterface;
+use flyingpiranhas\mvc\views\head\interfaces\HeadInterface;
 
 /**
  * The ControllerAbstract object is a base for all controllers in the application.
@@ -28,7 +29,7 @@ abstract class ControllerAbstract implements ControllerInterface
 {
 
     /** @var string */
-    protected $sName;
+    protected $sName = '';
 
     /** @var RequestInterface */
     private $oRequest;
@@ -39,8 +40,8 @@ abstract class ControllerAbstract implements ControllerInterface
     /** @var ResponseInterface */
     private $oResponse;
 
-    /** @var array */
-    private $aViewSettings = array();
+    /** @var HeadInterface */
+    private $oHead;
 
     /** @var string */
     private $sViewsDir;
@@ -51,7 +52,7 @@ abstract class ControllerAbstract implements ControllerInterface
     /**
      * @return SessionInterface
      */
-    public function getSession()
+    protected function getSession()
     {
         return $this->oSession;
     }
@@ -59,7 +60,7 @@ abstract class ControllerAbstract implements ControllerInterface
     /**
      * @return RequestInterface
      */
-    public function getRequest()
+    protected function getRequest()
     {
         return $this->oRequest;
     }
@@ -67,9 +68,17 @@ abstract class ControllerAbstract implements ControllerInterface
     /**
      * @return ResponseInterface
      */
-    public function getResponse()
+    protected function getResponse()
     {
         return $this->oResponse;
+    }
+
+    /**
+     * @return HeadInterface
+     */
+    protected function getHead()
+    {
+        return $this->oHead;
     }
 
     /**
@@ -84,20 +93,9 @@ abstract class ControllerAbstract implements ControllerInterface
     /**
      * @return ModuleInterface
      */
-    public function getModule()
+    protected function getModule()
     {
         return $this->oModule;
-    }
-
-    /**
-     * @param array $aViewSettings
-     *
-     * @return ControllerAbstract
-     */
-    public function setViewSettings(array $aViewSettings)
-    {
-        $this->aViewSettings = $aViewSettings;
-        return $this;
     }
 
     /**
@@ -140,6 +138,21 @@ abstract class ControllerAbstract implements ControllerInterface
     }
 
     /**
+     * @dependency
+     *
+     * @param HeadInterface $oHead
+     *
+     * @return ControllerAbstract
+     */
+    public function setHead(HeadInterface $oHead)
+    {
+        $this->oHead = $oHead;
+        return $this;
+    }
+
+    /**
+     * @dependency
+     *
      * @param ModuleInterface $oModule
      *
      * @return ControllerAbstract
@@ -213,15 +226,28 @@ abstract class ControllerAbstract implements ControllerInterface
         $oView = call_user_func_array(array($this, $sAction), $aParams);
 
         if ($oView instanceof ViewInterface) {
-            if (!$oView->getHead()) $oView->setHead($this->aViewSettings['oHead']);
-            if (!$oView->getLayoutsIncludePath()) $oView->setLayoutsIncludePath($this->aViewSettings['aLayoutsIncludePath']);
-            if (!$oView->getViewsIncludePath()) $oView->setViewsIncludePath($this->aViewSettings['aViewsIncludePath']);
-            if (!$oView->getFragmentsIncludePath()) $oView->setFragmentsIncludePath($this->aViewSettings['aFragmentsIncludePath']);
+            $aLayoutsIncludePath = array(
+                $this->oModule->getModuleDir() . '/' . $this->oModule->getLayoutsDir(),
+                $this->oModule->getApp()->getProjectDir() . '/' . $this->oModule->getApp()->getLayoutsDir(),
+            );
+            $aViewsIncludePath = array(
+                $this->oModule->getModuleDir() . '/' . $this->oModule->getViewsDir() . '/' . lcfirst($this->getViewsDir()),
+                $this->oModule->getModuleDir() . '/' . $this->oModule->getViewsDir(),
+                $this->oModule->getApp()->getProjectDir() . '/' . $this->oModule->getApp()->getViewsDir(),
+            );
+            $aFragmentsIncludePath = array(
+                $this->oModule->getModuleDir() . '/' . $this->oModule->getViewFragmentsDir(),
+                $this->oModule->getApp()->getProjectDir() . '/' . $this->oModule->getApp()->getViewFragmentsDir(),
+            );
+
+            if (!$oView->getHead()) $oView->setHead($this->oHead);
+            if (!$oView->getLayoutsIncludePath()) $oView->setLayoutsIncludePath($aLayoutsIncludePath);
+            if (!$oView->getViewsIncludePath()) $oView->setViewsIncludePath($aViewsIncludePath);
+            if (!$oView->getFragmentsIncludePath()) $oView->setFragmentsIncludePath($aFragmentsIncludePath);
             if ($oView->getView() === null) $oView->setView($sActionName);
         }
 
         $this->postDispatch();
-
         return $oView;
     }
 

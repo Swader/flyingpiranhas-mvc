@@ -16,6 +16,26 @@ interface ModuleInterface
 {
 
     /**
+     * @return string
+     */
+    public function getModuleDir();
+
+    /**
+     * @return string
+     */
+    public function getLayoutsDir();
+
+    /**
+     * @return string
+     */
+    public function getViewsDir();
+
+    /**
+     * @return string
+     */
+    public function getViewFragmentsDir();
+
+    /**
      * @return AppInterface
      */
     public function getApp();
@@ -27,7 +47,7 @@ interface ModuleInterface
      *
      * @return mixed
      */
-    public function findView($sAction, $sControllerName = null, Params $aParams = null);
+    public function findView($sAction, $sControllerName, Params $aParams = null);
 
     /**
      * @param string $sModuleName

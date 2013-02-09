@@ -26,13 +26,6 @@ interface ControllerInterface
     public function getViewsDir();
 
     /**
-     * @param array $aViewSettings
-     *
-     * @return ControllerInterface
-     */
-    public function setViewSettings(array $aViewSettings);
-
-    /**
      * @param ModuleInterface $oModule
      *
      * @return ControllerInterface

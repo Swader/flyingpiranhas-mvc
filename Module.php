@@ -66,6 +66,38 @@ class Module implements ModuleInterface
     }
 
     /**
+     * @return string
+     */
+    public function getModuleDir()
+    {
+        return $this->sModuleDir;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLayoutsDir()
+    {
+        return $this->sLayoutsDir;
+    }
+
+    /**
+     * @return string
+     */
+    public function getViewsDir()
+    {
+        return $this->sViewsDir;
+    }
+
+    /**
+     * @return string
+     */
+    public function getViewFragmentsDir()
+    {
+        return $this->sViewFragmentsDir;
+    }
+
+    /**
      * @return AppInterface
      */
     public final function getApp()
@@ -172,36 +204,8 @@ class Module implements ModuleInterface
      */
     private final function findController($sControllerName)
     {
-        /** @var $oApp AppInterface */
-        $oApp = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\interfaces\\AppInterface');
-
-        $sProjectDir = $oApp->getProjectDir();
-        $sModuleDir = $this->sModuleDir;
-
         $sControllerClass = $this->sModuleNamespace . '\\' . $this->sControllerNamespace . '\\' . ucfirst($sControllerName);
-
-        $oHead = $this->oDIContainer->resolve('flyingpiranhas\\mvc\\views\\head\\interfaces\\HeadInterface');
-        $oController = $this->oDIContainer->resolve($sControllerClass);
-        $oController->setViewSettings(
-            array(
-                 'oHead' => $oHead,
-                 'aLayoutsIncludePath' => array(
-                     $sModuleDir . '/' . $this->sLayoutsDir,
-                     $sProjectDir . '/' . $oApp->getLayoutsDir(),
-                 ),
-                 'aViewsIncludePath' => array(
-                     $sModuleDir . '/' . $this->sViewsDir . '/' . lcfirst($oController->getViewsDir()),
-                     $sModuleDir . '/' . $this->sViewsDir,
-                     $sProjectDir . '/' . $oApp->getViewsDir(),
-                 ),
-                 'aFragmentsIncludePath' => array(
-                     $sModuleDir . '/' . $this->sViewFragmentsDir,
-                     $sProjectDir . '/' . $oApp->getViewFragmentsDir(),
-                 ),
-            )
-        );
-
-        $oController->setModule($this);
+        $oController = $this->oDIContainer->resolve($sControllerClass, array('oModule' => $this));
         return $oController;
     }
 
@@ -212,12 +216,9 @@ class Module implements ModuleInterface
      *
      * @return ViewInterface
      */
-    public final function findView($sAction, $sControllerName = null, Params $aParams = null)
+    public final function findView($sAction, $sControllerName, Params $aParams = null)
     {
-        $sControllerName = ($sControllerName) ? $sControllerName : $this->oRouter->getController();
-
         $oController = $this->findController($sControllerName);
-
         return $oController->runAction($sAction, $aParams);
     }
 
