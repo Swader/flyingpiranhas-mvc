@@ -3,6 +3,7 @@
 namespace flyingpiranhas\mvc\controller\abstracts;
 
 use flyingpiranhas\common\http\interfaces\RequestInterface;
+use flyingpiranhas\mvc\exceptions\MvcException;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\common\http\Params;
 use BadMethodCallException;
@@ -303,6 +304,7 @@ abstract class ControllerAbstract implements ControllerInterface
      * @param string      $sMethod
      *
      * @return mixed
+     * @throws ControllerException
      */
     protected function getParam($sName, $mDefault = null, $sCtype = null, $sMethod = null)
     {
@@ -321,40 +323,11 @@ abstract class ControllerAbstract implements ControllerInterface
         }
 
         if ($sCtype) {
-            switch ($sCtype) {
-                case 'alnum':
-                    $mValue = (ctype_alnum($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'alpha':
-                    $mValue = (ctype_alpha($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'digit':
-                    $mValue = (ctype_digit($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'cntrl':
-                    $mValue = (ctype_cntrl($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'graph':
-                    $mValue = (ctype_graph($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'lower':
-                    $mValue = (ctype_lower($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'print':
-                    $mValue = (ctype_print($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'space':
-                    $mValue = (ctype_space($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'upper':
-                    $mValue = (ctype_upper($mValue)) ? $mValue : $mDefault;
-                    break;
-                case 'xdigit':
-                    $mValue = (ctype_xdigit($mValue)) ? $mValue : $mDefault;
-                    break;
-                default:
-                    $mValue = $mDefault;
-                    break;
+            $sFunction = 'ctype_'.$sCtype;
+            if (function_exists($sFunction)) {
+                $mValue = ($sFunction($mValue)) ? $mValue : $mDefault;
+            } else {
+                throw new ControllerException('Ctype function '.$sFunction.'() not recognized.');
             }
         }
 

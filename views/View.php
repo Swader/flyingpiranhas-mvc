@@ -5,6 +5,7 @@ namespace flyingpiranhas\mvc\views;
 use flyingpiranhas\common\http\interfaces\ContentInterface;
 use flyingpiranhas\mvc\views\head\interfaces\HeadInterface;
 use flyingpiranhas\mvc\views\interfaces\ViewInterface;
+use flyingpiranhas\mvc\views\exceptions\ViewException;
 
 /**
  * A View object is responsible for rendering content.
@@ -136,19 +137,34 @@ class View implements ViewInterface, ContentInterface
     /**
      * Renders the first layout template
      * on the include path with the name of $this->sLayout
+     *
+     * @return View
+     * @throws exceptions\ViewException
      */
     private function renderLayout()
     {
+        $bLayoutFound = false;
         if (is_readable($this->sLayout)) {
             include trim($this->sLayout, '.php') . '.php';
+            $bLayoutFound = true;
         } else {
             foreach ($this->aLayoutsIncludePath as $sDir) {
                 if (is_readable($sDir . '/' . (rtrim($this->sLayout, '.php')) . '.php')) {
                     $sDir = ($sDir) ? $sDir : '.';
                     include $sDir . '/' . (rtrim($this->sLayout, '.php')) . '.php';
-                    break;
+                    $bLayoutFound = true;
                 }
             }
+        }
+        if (!$bLayoutFound) {
+            $sMessage = 'Layout file "' . $this->sLayout . '.php" not found! Looked in the following folders: ';
+            foreach ($this->aLayoutsIncludePath as $sDir) {
+                $sMessage .= $sDir . ', ';
+            }
+            $sMessage = trim($sMessage, ', ');
+            throw new ViewException($sMessage);
+        } else {
+            return $this;
         }
     }
 
@@ -247,20 +263,35 @@ class View implements ViewInterface, ContentInterface
     /**
      * Renders the first view template
      * on the include path with the name of $this->sView
+     *
+     * @return View
+     * @throws exceptions\ViewException
      */
     protected function renderView()
     {
+        $bViewFound = false;
         if (is_readable($this->sView)) {
             include rtrim($this->sView, '.php') . '.php';
+            $bViewFound = true;
         } else {
             foreach ($this->aViewsIncludePath as $sDir) {
                 $sDir = ($sDir) ? $sDir : '.';
 
                 if (is_readable($sDir . '/' . (rtrim($this->sView, '.php')) . '.php')) {
                     include $sDir . '/' . (rtrim($this->sView, '.php')) . '.php';
-                    break;
+                    $bViewFound = true;
                 }
             }
+        }
+        if (!$bViewFound) {
+            $sMessage = 'View file "' . $this->sView . '.php" not found! Looked in the following folders: ';
+            foreach ($this->aViewsIncludePath as $sDir) {
+                $sMessage .= $sDir . ', ';
+            }
+            $sMessage = trim($sMessage, ', ');
+            throw new ViewException($sMessage);
+        } else {
+            return $this;
         }
     }
 
