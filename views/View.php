@@ -29,7 +29,7 @@ class View implements ViewInterface, ContentInterface
     protected $oHead;
 
     /** @var string */
-    protected $sLayout = '';
+    protected $sLayout = 'default';
 
     /** @var array */
     protected $aLayoutsIncludePath = array();
