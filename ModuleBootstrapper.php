@@ -115,8 +115,7 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
                 ->setModuleDir($this->sModuleDir)
                 ->setModuleName($this->sModuleName)
                 ->setModuleNamespace($this->sModuleNamespace)
-                ->setModuleSettings($this->aModuleSettings)
-                ->preDispatch();
+                ->setModuleSettings($this->aModuleSettings);
             $this->oModule = $oModule;
         }
         return $this->oModule;

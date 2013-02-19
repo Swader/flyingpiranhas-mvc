@@ -80,11 +80,6 @@ interface ModuleInterface
     /**
      * @return ModuleInterface
      */
-    public function preDispatch();
-
-    /**
-     * @return ModuleInterface
-     */
     public function work();
 
 }

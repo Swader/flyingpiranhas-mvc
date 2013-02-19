@@ -233,7 +233,11 @@ class Module implements ModuleInterface
         $this->oRouter->parseRequest();
 
         // dispatch
+        $this->preDispatch();
+
         $oView = $this->findView($this->oRouter->getAction(), $this->oRouter->getController());
+
+        $this->postDispatch();
 
         // render
         $oResponse = $this->oDIContainer->resolve('flyingpiranhas\\common\\http\\interfaces\\ResponseInterface');
@@ -242,9 +246,17 @@ class Module implements ModuleInterface
     }
 
     /**
-     * Override this method to execute operations right after the module mind is created.
+     * Override this method to execute operations right before the controller is created.
      */
     public function preDispatch()
+    {
+
+    }
+
+    /**
+     * Override this method to execute operations right after the controller action is called.
+     */
+    public function postDispatch()
     {
 
     }
