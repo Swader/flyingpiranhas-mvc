@@ -1,156 +1,154 @@
 <?php
 
-namespace flyingpiranhas\mvc\views;
+    namespace flyingpiranhas\mvc\views;
 
-use flyingpiranhas\common\http\interfaces\ContentInterface;
-use flyingpiranhas\mvc\views\head\interfaces\HeadInterface;
-use flyingpiranhas\mvc\views\interfaces\ViewInterface;
-use flyingpiranhas\mvc\views\exceptions\ViewException;
-
-/**
- * A View object is responsible for rendering content.
- * It holds a reference to a shared Head object, to the current ModuleMind,
- * as well as any other Views that are to be rendered as fragments.
- *
- * @category       views
- * @package        flyingpiranhas.mvc
- * @license        Apache-2.0
- * @version        0.01
- * @since          2012-09-07
- * @author         Ivan Pintar
- */
-class View implements ViewInterface, ContentInterface
-{
-
-    /** @var array */
-    protected $sResponseHeader = array('Content-type: text/html; charset=uft-8');
-
-    /** @var HeadInterface */
-    protected $oHead;
-
-    /** @var string */
-    protected $sLayout = 'default';
-
-    /** @var array */
-    protected $aLayoutsIncludePath = array();
-
-    /** @var string|null */
-    protected $sView = null;
-
-    /** @var array */
-    protected $aViewData = array();
-
-    /** @var array */
-    protected $aViewsIncludePath = array();
-
-    /** @var bool */
-    protected $bPreRenderDone = false;
-
-    /** @var array */
-    protected $aFragments = array();
-
-    /** @var array */
-    protected $aFragmentsIncludePath = array();
+    use flyingpiranhas\common\http\interfaces\ContentInterface;
+    use flyingpiranhas\mvc\views\head\interfaces\HeadInterface;
+    use flyingpiranhas\mvc\views\interfaces\ViewInterface;
+    use flyingpiranhas\mvc\views\exceptions\ViewException;
 
     /**
-     * Sets the view properties and fragments.
+     * A View object is responsible for rendering content.
+     * It holds a reference to a shared Head object, to the current ModuleMind,
+     * as well as any other Views that are to be rendered as fragments.
      *
-     * @param array  $aViewData  array of view properties that are accessible in the templates as public properties, and rendering properties like view, leyout, head
-     * @param string $sView
-     * @param array  $aFragments array of fragments
+     * @category       views
+     * @package        flyingpiranhas.mvc
+     * @license        Apache-2.0
+     * @version        0.01
+     * @since          2012-09-07
+     * @author         Ivan Pintar
      */
-    public function __construct(array $aViewData = array(), $sView = null, array $aFragments = array())
+    class View implements ViewInterface, ContentInterface
     {
-        if ($sView !== null) {
-            $this->setView($sView);
-        }
-        if ($aFragments) {
-            $this->aFragments = $aFragments;
-        }
-        if ($aViewData) {
-            $this->setViewData($aViewData);
-        }
-    }
 
-    /**
-     * @return array
-     */
-    public function getResponseHeaders()
-    {
-        return $this->sResponseHeader;
-    }
+        /** @var array */
+        protected $sResponseHeader = array('Content-type: text/html; charset=uft-8');
 
-    /**
-     * @return HeadInterface
-     */
-    public function getHead()
-    {
-        return $this->oHead;
-    }
+        /** @var HeadInterface */
+        protected $oHead;
 
-    /**
-     * @param HeadInterface $oHead
-     *
-     * @return View
-     */
-    public function setHead(HeadInterface $oHead)
-    {
-        $this->oHead = $oHead;
-        /** @var $oFragment ViewInterface */
-        foreach ($this->aFragments as $oFragment) {
-            $oFragment->setHead($oHead);
+        /** @var string */
+        protected $sLayout = 'default';
+
+        /** @var array */
+        protected $aLayoutsIncludePath = array();
+
+        /** @var string|null */
+        protected $sView = null;
+
+        /** @var array */
+        protected $aViewData = array();
+
+        /** @var array */
+        protected $aViewsIncludePath = array();
+
+        /** @var bool */
+        protected $bPreRenderDone = false;
+
+        /** @var array */
+        protected $aFragments = array();
+
+        /** @var array */
+        protected $aFragmentsIncludePath = array();
+
+        /**
+         * Sets the view properties and fragments.
+         *
+         * @param array  $aViewData  array of view properties that are accessible in the templates as public properties, and rendering properties like view, leyout, head
+         * @param string $sView
+         * @param array  $aFragments array of fragments
+         */
+        public function __construct(array $aViewData = array(), $sView = null, array $aFragments = array())
+        {
+            if ($sView !== null) {
+                $this->setView($sView);
+            }
+            if ($aFragments) {
+                $this->aFragments = $aFragments;
+            }
+            if ($aViewData) {
+                $this->setViewData($aViewData);
+            }
         }
 
-        return $this;
-    }
+        /**
+         * @return array
+         */
+        public function getResponseHeaders()
+        {
+            return $this->sResponseHeader;
+        }
 
-    /**
-     * @param string $sLayout
-     *
-     * @return View
-     */
-    public function setLayout($sLayout)
-    {
-        $this->sLayout = $sLayout;
-        return $this;
-    }
+        /**
+         * @return HeadInterface
+         */
+        public function getHead()
+        {
+            return $this->oHead;
+        }
 
-    /**
-     * @return array
-     */
-    public function getLayoutsIncludePath()
-    {
-        return $this->aLayoutsIncludePath;
-    }
+        /**
+         * @param HeadInterface $oHead
+         *
+         * @return View
+         */
+        public function setHead(HeadInterface $oHead)
+        {
+            $this->oHead = $oHead;
+            /** @var $oFragment ViewInterface */
+            foreach ($this->aFragments as $oFragment) {
+                $oFragment->setHead($oHead);
+            }
 
-    /**
-     * @param array $aLayoutsIncludePath
-     *
-     * @return View
-     */
-    public function setLayoutsIncludePath(array $aLayoutsIncludePath)
-    {
-        $this->aLayoutsIncludePath = $aLayoutsIncludePath;
-        return $this;
-    }
+            return $this;
+        }
 
-    /**
-     * Renders the first layout template
-     * on the include path with the name of $this->sLayout
-     *
-     * @return View
-     * @throws exceptions\ViewException
-     */
-    private function renderLayout()
-    {
-        $bLayoutFound = false;
+        /**
+         * @param string $sLayout
+         *
+         * @return View
+         */
+        public function setLayout($sLayout)
+        {
+            $this->sLayout = $sLayout;
 
-        $sLayoutName = $this->fixPhpFileName($this->sLayout);
+            return $this;
+        }
 
-        if (is_readable($this->sLayout)) {
-            include $sLayoutName;
-            $bLayoutFound = true;
-        } else {
+        /**
+         * @return array
+         */
+        public function getLayoutsIncludePath()
+        {
+            return $this->aLayoutsIncludePath;
+        }
+
+        /**
+         * @param array $aLayoutsIncludePath
+         *
+         * @return View
+         */
+        public function setLayoutsIncludePath(array $aLayoutsIncludePath)
+        {
+            $this->aLayoutsIncludePath = $aLayoutsIncludePath;
+
+            return $this;
+        }
+
+        /**
+         * Renders the first layout template
+         * on the include path with the name of $this->sLayout
+         *
+         * @return View
+         * @throws exceptions\ViewException
+         */
+        private function renderLayout()
+        {
+            $bLayoutFound = false;
+
+            $sLayoutName = $this->fixPhpFileName($this->sLayout);
+
             foreach ($this->aLayoutsIncludePath as $sDir) {
                 if (is_readable($sDir . '/' . $sLayoutName)) {
                     $sDir = ($sDir) ? $sDir : '.';
@@ -158,138 +156,139 @@ class View implements ViewInterface, ContentInterface
                     $bLayoutFound = true;
                 }
             }
-        }
-        if (!$bLayoutFound) {
-            $sMessage = 'Layout file "' . $sLayoutName . '" not found! Looked in the following folders: ';
-            foreach ($this->aLayoutsIncludePath as $sDir) {
-                $sMessage .= $sDir . ', ';
+
+            if (!$bLayoutFound) {
+                $sMessage = 'Layout file "' . $sLayoutName . '" not found! Looked in the following folders: ';
+                foreach ($this->aLayoutsIncludePath as $sDir) {
+                    $sMessage .= $sDir . ', ';
+                }
+                $sMessage = trim($sMessage, ', ');
+                throw new ViewException($sMessage);
+            } else {
+                return $this;
             }
-            $sMessage = trim($sMessage, ', ');
-            throw new ViewException($sMessage);
-        } else {
+        }
+
+        /**
+         * @return string
+         */
+        public function getView()
+        {
+            return $this->sView;
+        }
+
+        /**
+         * @param string $sView
+         *
+         * @return View
+         */
+        public function setView($sView)
+        {
+            $this->sView = $sView;
+
             return $this;
         }
-    }
 
-    /**
-     * @return string
-     */
-    public function getView()
-    {
-        return $this->sView;
-    }
+        /**
+         * @return string
+         */
+        public function getContents()
+        {
+            ob_start();
+            $this->render();
 
-    /**
-     * @param string $sView
-     *
-     * @return View
-     */
-    public function setView($sView)
-    {
-        $this->sView = $sView;
-        return $this;
-    }
+            return ob_get_clean();
+        }
 
-    /**
-     * @return string
-     */
-    public function getContents()
-    {
-        ob_start();
-        $this->render();
-        return ob_get_clean();
-    }
+        /**
+         * @return array
+         */
+        public function getViewsIncludePath()
+        {
+            return $this->aViewsIncludePath;
+        }
 
-    /**
-     * @return array
-     */
-    public function getViewsIncludePath()
-    {
-        return $this->aViewsIncludePath;
-    }
+        /**
+         * @param array $aViewsIncludePath
+         *
+         * @return View
+         */
+        public function setViewsIncludePath(array $aViewsIncludePath)
+        {
+            $this->aViewsIncludePath = $aViewsIncludePath;
 
-    /**
-     * @param array $aViewsIncludePath
-     *
-     * @return View
-     */
-    public function setViewsIncludePath(array $aViewsIncludePath)
-    {
-        $this->aViewsIncludePath = $aViewsIncludePath;
-        return $this;
-    }
+            return $this;
+        }
 
-    /**
-     * preRender() for this View and all contained Views
-     * is triggered before any rendering is done.
-     * This is where head params can be set, and other presentation logic can be done.
-     *
-     * @return View
-     */
-    public function preRender()
-    {
-        return $this;
-    }
+        /**
+         * preRender() for this View and all contained Views
+         * is triggered before any rendering is done.
+         * This is where head params can be set, and other presentation logic can be done.
+         *
+         * @return View
+         */
+        public function preRender()
+        {
+            return $this;
+        }
 
-    /**
-     * @return View
-     */
-    public final function preRenderAll()
-    {
-        if (!$this->bPreRenderDone) {
-            $this->preRender();
+        /**
+         * @return View
+         */
+        public final function preRenderAll()
+        {
+            if (!$this->bPreRenderDone) {
+                $this->preRender();
 
-            /** @var $oFragment ViewInterface */
-            foreach ($this->aFragments as $oFragment) {
-                $oFragment->preRenderAll();
+                /** @var $oFragment ViewInterface */
+                foreach ($this->aFragments as $oFragment) {
+                    $oFragment->preRenderAll();
+                }
+            }
+            $this->bPreRenderDone = true;
+
+            return $this;
+        }
+
+        /**
+         * Renders the view with the layout.
+         * If a layout is used, the layout template should call renderView(),
+         * where the view should be rendered.
+         */
+        public function render()
+        {
+            $this->preRenderAll();
+            if ($this->sLayout) {
+                $this->renderLayout();
+            } else {
+                $this->renderView();
             }
         }
-        $this->bPreRenderDone = true;
-        return $this;
-    }
 
-    /**
-     * Renders the view with the layout.
-     * If a layout is used, the layout template should call renderView(),
-     * where the view should be rendered.
-     */
-    public function render()
-    {
-        $this->preRenderAll();
-        if ($this->sLayout) {
-            $this->renderLayout();
-        } else {
-            $this->renderView();
+        /**
+         * Returns a php normalized file name.
+         *
+         * @param string $sName
+         * @return string
+         */
+        private function fixPhpFileName($sName)
+        {
+            return $sName . ((strlen($sName) > 4 && strtolower(substr($sName, -4)) === '.php') ? '' : '.php');
         }
-    }
 
-    /**
-     * Returns a php normalized file name.
-     *
-     * @param string $sName
-     * @return string
-     */
-    private function fixPhpFileName($sName) {
-        return $sName . ((strlen($sName) > 4 && strtolower(substr($sName, -4)) === '.php') ? '' : '.php');
-    }
+        /**
+         * Renders the first view template
+         * on the include path with the name of $this->sView
+         *
+         * @return View
+         * @throws exceptions\ViewException
+         */
+        protected function renderView()
+        {
+            $bViewFound = false;
 
-    /**
-     * Renders the first view template
-     * on the include path with the name of $this->sView
-     *
-     * @return View
-     * @throws exceptions\ViewException
-     */
-    protected function renderView()
-    {
-        $bViewFound = false;
+            $sFileName = $this->fixPhpFileName($this->sView);
 
-        $sFileName = $this->fixPhpFileName($this->sView);
-
-        if (is_readable($sFileName)) {
-            include $sFileName;
-            $bViewFound = true;
-        } else {
             foreach ($this->aViewsIncludePath as $sDir) {
                 $sDir = ($sDir) ? $sDir : '.';
 
@@ -298,164 +297,169 @@ class View implements ViewInterface, ContentInterface
                     $bViewFound = true;
                 }
             }
-        }
-        if (!$bViewFound) {
-            $sMessage = 'View file "' . $sFileName. '" not found! Looked in the following folders: ';
-            foreach ($this->aViewsIncludePath as $sDir) {
-                $sMessage .= $sDir . ', ';
-            }
-            $sMessage = trim($sMessage, ', ');
-            throw new ViewException($sMessage);
-        } else {
-            return $this;
-        }
-    }
 
-    /**
-     * @return array
-     */
-    public function getFragments()
-    {
-        return $this->aFragments;
-    }
-
-    /**
-     * @param string $sName
-     * @param array  $aParams
-     *
-     * @return View
-     */
-    public function getFragment($sName, array $aParams = array())
-    {
-        if (isset($this->aFragments[$sName])) {
-            $oFragment = $this->aFragments[$sName];
-        } else {
-            $aParams = $aParams ? $aParams : $this->aViewData;
-            $oFragment = new View($aParams, $sName);
-        }
-
-        if (!$oFragment->getViewsIncludePath()) {
-            $oFragment->setViewsIncludePath($this->aFragmentsIncludePath);
-        }
-        if (!$oFragment->getFragmentsIncludePath()) {
-            $oFragment->setFragmentsIncludePath($this->aFragmentsIncludePath);
-        }
-
-        return $oFragment;
-    }
-
-    /**
-     * @param array $aFragments
-     *
-     * @return View
-     */
-    public function addFragments(array $aFragments)
-    {
-        foreach ($aFragments as $sName => $oFragment) {
-            $this->addFragment($sName, $oFragment);
-        }
-        return $this;
-    }
-
-    /**
-     * @param string $sName
-     * @param View   $oFragment
-     *
-     * @return View
-     */
-    public function addFragment($sName, View $oFragment)
-    {
-        $this->aFragments[$sName] = $oFragment;
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getFragmentsIncludePath()
-    {
-        return $this->aFragmentsIncludePath;
-    }
-
-    /**
-     * @param array $aFragmentsIncludePath
-     *
-     * @return View
-     */
-    public function setFragmentsIncludePath(array $aFragmentsIncludePath)
-    {
-        $this->aFragmentsIncludePath = $aFragmentsIncludePath;
-        return $this;
-    }
-
-    /**
-     * Calls the render method on the fragment View
-     * stored with the given name
-     *
-     * @param string $sName
-     * @param array  $aParams
-     */
-    protected function renderFragment($sName, array $aParams = array())
-    {
-        $this->getFragment($sName, $aParams)->render();
-    }
-
-    /**
-     * @param string $sName
-     *
-     * @return mixed
-     */
-    public function __get($sName)
-    {
-        return (isset($this->aViewData[$sName])) ? $this->aViewData[$sName] : null;
-    }
-
-    /**
-     * Sets multiple properties.
-     * If a setter exists for a property it will use that.
-     * So properties that are used when rendering, like view, layout, head and similar are "reserved".
-     * Other properties are view data and are saved into the $aViewProperties array.
-     *
-     * @param array $aViewData
-     * @param bool  $bOverwrite
-     *
-     * @return View
-     */
-    public function setViewData(array $aViewData, $bOverwrite = false)
-    {
-        if ($bOverwrite) {
-            $this->aViewData = $aViewData;
-        } else {
-            foreach ($aViewData as $sKey => $mVal) {
-                $this->addViewData($sKey, $mVal, $bOverwrite);
+            if (!$bViewFound) {
+                $sMessage = 'View file "' . $sFileName . '" not found! Looked in the following folders: ';
+                foreach ($this->aViewsIncludePath as $sDir) {
+                    $sMessage .= $sDir . ', ';
+                }
+                $sMessage = trim($sMessage, ', ');
+                throw new ViewException($sMessage);
+            } else {
+                return $this;
             }
         }
-        return $this;
-    }
 
-    /**
-     * @param string $sKey
-     * @param mixed  $mValue
-     * @param bool   $bOverwrite
-     *
-     * @return View
-     */
-    public function addViewData($sKey, $mValue, $bOverwrite = false)
-    {
-        if (!$bOverwrite && isset($this->aViewData[$sKey])) {
+        /**
+         * @return array
+         */
+        public function getFragments()
+        {
+            return $this->aFragments;
+        }
+
+        /**
+         * @param string $sName
+         * @param array  $aParams
+         *
+         * @return View
+         */
+        public function getFragment($sName, array $aParams = array())
+        {
+            if (isset($this->aFragments[$sName])) {
+                $oFragment = $this->aFragments[$sName];
+            } else {
+                $aParams   = $aParams ? $aParams : $this->aViewData;
+                $oFragment = new View($aParams, $sName);
+            }
+
+            if (!$oFragment->getViewsIncludePath()) {
+                $oFragment->setViewsIncludePath($this->aFragmentsIncludePath);
+            }
+            if (!$oFragment->getFragmentsIncludePath()) {
+                $oFragment->setFragmentsIncludePath($this->aFragmentsIncludePath);
+            }
+
+            return $oFragment;
+        }
+
+        /**
+         * @param array $aFragments
+         *
+         * @return View
+         */
+        public function addFragments(array $aFragments)
+        {
+            foreach ($aFragments as $sName => $oFragment) {
+                $this->addFragment($sName, $oFragment);
+            }
+
             return $this;
         }
 
-        $this->aViewData[$sKey] = $mValue;
-        return $this;
-    }
+        /**
+         * @param string $sName
+         * @param View   $oFragment
+         *
+         * @return View
+         */
+        public function addFragment($sName, View $oFragment)
+        {
+            $this->aFragments[$sName] = $oFragment;
 
-    /**
-     * @return array
-     */
-    public function getViewData()
-    {
-        return $this->aViewData;
-    }
+            return $this;
+        }
 
-}
+        /**
+         * @return array
+         */
+        public function getFragmentsIncludePath()
+        {
+            return $this->aFragmentsIncludePath;
+        }
+
+        /**
+         * @param array $aFragmentsIncludePath
+         *
+         * @return View
+         */
+        public function setFragmentsIncludePath(array $aFragmentsIncludePath)
+        {
+            $this->aFragmentsIncludePath = $aFragmentsIncludePath;
+
+            return $this;
+        }
+
+        /**
+         * Calls the render method on the fragment View
+         * stored with the given name
+         *
+         * @param string $sName
+         * @param array  $aParams
+         */
+        protected function renderFragment($sName, array $aParams = array())
+        {
+            $this->getFragment($sName, $aParams)->render();
+        }
+
+        /**
+         * @param string $sName
+         *
+         * @return mixed
+         */
+        public function __get($sName)
+        {
+            return (isset($this->aViewData[$sName])) ? $this->aViewData[$sName] : null;
+        }
+
+        /**
+         * Sets multiple properties.
+         * If a setter exists for a property it will use that.
+         * So properties that are used when rendering, like view, layout, head and similar are "reserved".
+         * Other properties are view data and are saved into the $aViewProperties array.
+         *
+         * @param array $aViewData
+         * @param bool  $bOverwrite
+         *
+         * @return View
+         */
+        public function setViewData(array $aViewData, $bOverwrite = false)
+        {
+            if ($bOverwrite) {
+                $this->aViewData = $aViewData;
+            } else {
+                foreach ($aViewData as $sKey => $mVal) {
+                    $this->addViewData($sKey, $mVal, $bOverwrite);
+                }
+            }
+
+            return $this;
+        }
+
+        /**
+         * @param string $sKey
+         * @param mixed  $mValue
+         * @param bool   $bOverwrite
+         *
+         * @return View
+         */
+        public function addViewData($sKey, $mValue, $bOverwrite = false)
+        {
+            if (!$bOverwrite && isset($this->aViewData[$sKey])) {
+                return $this;
+            }
+
+            $this->aViewData[$sKey] = $mValue;
+
+            return $this;
+        }
+
+        /**
+         * @return array
+         */
+        public function getViewData()
+        {
+            return $this->aViewData;
+        }
+
+    }
