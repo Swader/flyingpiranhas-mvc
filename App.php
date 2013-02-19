@@ -54,9 +54,6 @@ class App implements AppInterface
     /** @var DIContainerInterface */
     protected $oDIContainer;
 
-    /** @var array */
-    protected $aModules = array();
-
     /**
      * @return string
      */
@@ -181,55 +178,49 @@ class App implements AppInterface
     }
 
     /**
-     * Creates a Module for the given module name,
-     * fills it with the required info and returns.
+     * Creates and runs a Module for the given module name,
      *
      * @param string $sModuleName
      *
-     * @return ModuleInterface
      * @throws MvcException
      */
-    public final function findModule($sModuleName)
+    protected final function runModule($sModuleName)
     {
-        if (!isset($this->aModules[$sModuleName])) {
-            $sModuleNamespace =
-                (isset($this->aModuleNamespaces[$sModuleName]))
-                    ? $this->aModuleNamespaces[$sModuleName]
-                    : $sModuleName;
+        $sModuleNamespace =
+            (isset($this->aModuleNamespaces[$sModuleName]))
+                ? $this->aModuleNamespaces[$sModuleName]
+                : $sModuleName;
 
-            $sModuleConfigPath =
-                (isset($this->aModuleConfigPaths[$sModuleName]))
-                    ? $this->aModuleConfigPaths[$sModuleName]
-                    : 'config/Config.ini';
+        $sModuleConfigPath =
+            (isset($this->aModuleConfigPaths[$sModuleName]))
+                ? $this->aModuleConfigPaths[$sModuleName]
+                : 'config/Config.ini';
 
-            $sModuleDir = $this->sProjectDir . '/' . $this->sModulesDir . '/' . str_replace('\\', '/', $sModuleNamespace);
+        $sModuleDir = $this->sProjectDir . '/' . $this->sModulesDir . '/' . str_replace('\\', '/', $sModuleNamespace);
 
-            $aBootstrapperParams = array(
-                'sModuleName' => $sModuleName,
-                'sModuleNamespace' => $sModuleNamespace,
-                'sModuleDir' => $sModuleDir,
-                'sAppEnv' => $this->sAppEnv,
-                'sModuleConfigPath' => $sModuleConfigPath
-            );
+        $aBootstrapperParams = array(
+            'sModuleName' => $sModuleName,
+            'sModuleNamespace' => $sModuleNamespace,
+            'sModuleDir' => $sModuleDir,
+            'sAppEnv' => $this->sAppEnv,
+            'sModuleConfigPath' => $sModuleConfigPath
+        );
 
-            /** @var $oModuleBootstrapper ModuleBootstrapperInterface */
-            $oModuleBootstrapper = null;
-            try {
-                $sModuleClass = $sModuleNamespace . '\\Bootstrapper';
-                $oModuleBootstrapper = $this->oDIContainer->resolve($sModuleClass, $aBootstrapperParams);
-            } catch (Exception $oException) {
-                $oModuleBootstrapper = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\ModuleBootstrapper', $aBootstrapperParams);
-            }
-
-
-            if (!($oModuleBootstrapper instanceof ModuleBootstrapperInterface)) {
-                throw new MvcException('The module bootstrapper has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleBootstrapperInterface');
-            }
-
-            $this->aModules[$sModuleName] = $oModuleBootstrapper->findModule();
+        /** @var $oModuleBootstrapper ModuleBootstrapperInterface */
+        $oModuleBootstrapper = null;
+        try {
+            $sModuleClass = $sModuleNamespace . '\\Bootstrapper';
+            $oModuleBootstrapper = $this->oDIContainer->resolve($sModuleClass, $aBootstrapperParams);
+        } catch (Exception $oException) {
+            $oModuleBootstrapper = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\ModuleBootstrapper', $aBootstrapperParams);
         }
 
-        return $this->aModules[$sModuleName];
+
+        if (!($oModuleBootstrapper instanceof ModuleBootstrapperInterface)) {
+            throw new MvcException('The module bootstrapper has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleBootstrapperInterface');
+        }
+
+        $oModuleBootstrapper->run();
     }
 
     /**
@@ -257,8 +248,7 @@ class App implements AppInterface
         $this->preDispatch();
 
         $this->oRouter->parseRequest();
-        $oModule = $this->findModule($this->oRouter->getModule());
-        $oModule->work();
+        $this->runModule($this->oRouter->getModule());
 
         $this->postDispatch();
     }

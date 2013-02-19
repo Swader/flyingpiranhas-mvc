@@ -34,13 +34,6 @@ interface AppInterface
     public function getViewFragmentsDir();
 
     /**
-     * @param string $sModuleName
-     *
-     * @return ModuleInterface
-     */
-    public function findModule($sModuleName);
-
-    /**
      * @param string $sAppEnv
      *
      * @return AppInterface

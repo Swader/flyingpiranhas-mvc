@@ -32,9 +32,8 @@ interface ModuleBootstrapperInterface
                                 $sModuleConfigPath = 'config/Config.ini');
 
     /**
-     * @return ModuleInterface
      * @throws MvcException
      */
-    public function findModule();
+    public function run();
 
 }

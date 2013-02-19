@@ -28,9 +28,6 @@ use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
 class ModuleBootstrapper implements ModuleBootstrapperInterface
 {
 
-    /** @var ModuleInterface */
-    protected $oModule;
-
     /** @var string */
     protected $sAppEnv = 'production';
 
@@ -89,36 +86,32 @@ class ModuleBootstrapper implements ModuleBootstrapperInterface
 
 
     /**
-     * @return ModuleInterface
      * @throws MvcException
      */
-    public final function findModule()
+    public final function run()
     {
-        if (!$this->oModule) {
-            $this->initRouter();
-            $this->runCustomInit();
+        $this->initRouter();
+        $this->runCustomInit();
 
-            /** @var $oModule ModuleInterface */
-            $oModule = null;
-            try {
-                $sModuleClass = $this->sModuleNamespace . '\\Module';
-                $oModule = $this->oDIContainer->resolve($sModuleClass);
-            } catch (Exception $oException) {
-                $oModule = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\Module');
-            }
-
-            if (!($oModule instanceof ModuleInterface)) {
-                throw new MvcException('The module has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleInterface');
-            }
-
-            $oModule
-                ->setModuleDir($this->sModuleDir)
-                ->setModuleName($this->sModuleName)
-                ->setModuleNamespace($this->sModuleNamespace)
-                ->setModuleSettings($this->aModuleSettings);
-            $this->oModule = $oModule;
+        /** @var $oModule ModuleInterface */
+        $oModule = null;
+        try {
+            $sModuleClass = $this->sModuleNamespace . '\\Module';
+            $oModule = $this->oDIContainer->resolve($sModuleClass);
+        } catch (Exception $oException) {
+            $oModule = $this->oDIContainer->resolve('\\flyingpiranhas\\mvc\\Module');
         }
-        return $this->oModule;
+
+        if (!($oModule instanceof ModuleInterface)) {
+            throw new MvcException('The module has to implement \\flyingpiranhas\\mvc\\interfaces\\ModuleInterface');
+        }
+
+        $oModule
+            ->setModuleDir($this->sModuleDir)
+            ->setModuleName($this->sModuleName)
+            ->setModuleNamespace($this->sModuleNamespace)
+            ->setModuleSettings($this->aModuleSettings);
+        $oModule->work();
     }
 
     /**  */
