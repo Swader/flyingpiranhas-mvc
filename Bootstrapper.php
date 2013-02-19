@@ -153,7 +153,7 @@ class Bootstrapper
             $oRouter->setDefaults($aMcaDefaults);
 
             if (is_readable($sRoutesIniPath)) {
-                $oRouter->setDefaults($sRoutesIniPath);
+                $oRouter->addRoutes($sRoutesIniPath);
             }
             return $oRouter;
         };
