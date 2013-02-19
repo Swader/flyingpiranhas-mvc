@@ -144,20 +144,23 @@ class View implements ViewInterface, ContentInterface
     private function renderLayout()
     {
         $bLayoutFound = false;
+
+        $sLayoutName = $this->fixPhpFileName($this->sLayout);
+
         if (is_readable($this->sLayout)) {
-            include trim($this->sLayout, '.php') . '.php';
+            include $sLayoutName;
             $bLayoutFound = true;
         } else {
             foreach ($this->aLayoutsIncludePath as $sDir) {
-                if (is_readable($sDir . '/' . (rtrim($this->sLayout, '.php')) . '.php')) {
+                if (is_readable($sDir . '/' . $sLayoutName)) {
                     $sDir = ($sDir) ? $sDir : '.';
-                    include $sDir . '/' . (rtrim($this->sLayout, '.php')) . '.php';
+                    include $sDir . '/' . $sLayoutName;
                     $bLayoutFound = true;
                 }
             }
         }
         if (!$bLayoutFound) {
-            $sMessage = 'Layout file "' . $this->sLayout . '.php" not found! Looked in the following folders: ';
+            $sMessage = 'Layout file "' . $sLayoutName . '" not found! Looked in the following folders: ';
             foreach ($this->aLayoutsIncludePath as $sDir) {
                 $sMessage .= $sDir . ', ';
             }
@@ -261,6 +264,16 @@ class View implements ViewInterface, ContentInterface
     }
 
     /**
+     * Returns a php normalized file name.
+     *
+     * @param string $sName
+     * @return string
+     */
+    private function fixPhpFileName($sName) {
+        return $sName . ((strlen($sName) > 4 && strtolower(substr($sName, -4)) === '.php') ? '' : '.php');
+    }
+
+    /**
      * Renders the first view template
      * on the include path with the name of $this->sView
      *
@@ -270,21 +283,24 @@ class View implements ViewInterface, ContentInterface
     protected function renderView()
     {
         $bViewFound = false;
-        if (is_readable($this->sView)) {
-            include rtrim($this->sView, '.php') . '.php';
+
+        $sFileName = $this->fixPhpFileName($this->sView);
+
+        if (is_readable($sFileName)) {
+            include $sFileName;
             $bViewFound = true;
         } else {
             foreach ($this->aViewsIncludePath as $sDir) {
                 $sDir = ($sDir) ? $sDir : '.';
 
-                if (is_readable($sDir . '/' . (rtrim($this->sView, '.php')) . '.php')) {
-                    include $sDir . '/' . (rtrim($this->sView, '.php')) . '.php';
+                if (is_readable($sDir . '/' . $sFileName)) {
+                    include $sDir . '/' . $sFileName;
                     $bViewFound = true;
                 }
             }
         }
         if (!$bViewFound) {
-            $sMessage = 'View file "' . $this->sView . '.php" not found! Looked in the following folders: ';
+            $sMessage = 'View file "' . $sFileName. '" not found! Looked in the following folders: ';
             foreach ($this->aViewsIncludePath as $sDir) {
                 $sMessage .= $sDir . ', ';
             }
