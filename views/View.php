@@ -319,7 +319,7 @@ class View implements ViewInterface, ContentInterface
         if (isset($this->aFragments[$sName])) {
             $oFragment = $this->aFragments[$sName];
         } else {
-            $aParams = $aParams ? $aParams : $this->aViewData;
+            $aParams = array_merge($aParams, $this->getViewData());
             $oFragment = new View($aParams, $sName);
             $oFragment->setLayout(false);
         }
