@@ -7,7 +7,6 @@ use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
 use flyingpiranhas\mvc\exceptions\MvcException;
 use flyingpiranhas\mvc\router\interfaces\AppRouterInterface;
 use flyingpiranhas\mvc\interfaces\ModuleBootstrapperInterface;
-use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use Exception;
 
 /**

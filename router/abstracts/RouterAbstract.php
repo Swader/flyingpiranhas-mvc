@@ -93,7 +93,7 @@ abstract class RouterAbstract
     public function addRoutes($mRoutes)
     {
         if (is_array($mRoutes)) {
-            foreach ($mRoutes as $sName => $oRoute) {
+            foreach ($mRoutes as $oRoute) {
                 $this->addRoute($oRoute);
             }
         } else if (is_string($mRoutes)) {
@@ -126,7 +126,7 @@ abstract class RouterAbstract
      */
     public function parseRequest()
     {
-        $aUrlParts = parse_url($this->oRequest->getServer()->REQUEST_URI);
+        $aUrlParts = parse_url($this->oRequest->getServer()['REQUEST_URI']);
         $sPath = trim($aUrlParts['path'], '/');
         $sQueryString = (isset($aUrlParts['query'])) ? $aUrlParts['query'] : '';
 

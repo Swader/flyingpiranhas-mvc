@@ -6,7 +6,6 @@ use flyingpiranhas\mvc\controller\interfaces\ControllerInterface;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\mvc\router\interfaces\ModuleRouterInterface;
 use flyingpiranhas\mvc\views\interfaces\ViewInterface;
-use flyingpiranhas\common\http\Params;
 use flyingpiranhas\common\dependencyInjection\interfaces\DIContainerInterface;
 use flyingpiranhas\mvc\interfaces\AppInterface;
 
@@ -212,11 +211,11 @@ class Module implements ModuleInterface
     /**
      * @param string       $sAction
      * @param string|null  $sControllerName
-     * @param Params|null  $aParams
+     * @param array|null   $aParams
      *
      * @return ViewInterface
      */
-    public final function findView($sAction, $sControllerName, Params $aParams = null)
+    public final function findView($sAction, $sControllerName, array $aParams = null)
     {
         $oController = $this->findController($sControllerName);
         return $oController->runAction($sAction, $aParams);

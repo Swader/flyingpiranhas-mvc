@@ -4,6 +4,7 @@ namespace flyingpiranhas\mvc\router;
 
 use flyingpiranhas\mvc\router\abstracts\RouterAbstract;
 use flyingpiranhas\mvc\router\interfaces\ModuleRouterInterface;
+use flyingpiranhas\common\http\Request;
 
 /**
  * The ModuleRouter object parses the request
@@ -113,7 +114,7 @@ class ModuleRouter extends RouterAbstract implements ModuleRouterInterface
      */
     private function buildGet(array $aUrlParts = array())
     {
-        $aParams = $this->oRequest->getParams()->GET;
+        $aParams = $this->oRequest->getParams()[Request::PARAM_TYPES_GET];
 
         for ($iIndex = 0; $iIndex < count($aUrlParts); $iIndex += 2) {
             if (isset($aUrlParts[$iIndex])) {

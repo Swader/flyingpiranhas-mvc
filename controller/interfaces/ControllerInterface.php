@@ -2,7 +2,6 @@
 
 namespace flyingpiranhas\mvc\controller\interfaces;
 
-use flyingpiranhas\common\http\Params;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
 use flyingpiranhas\mvc\views\interfaces\ViewInterface;
 
@@ -34,10 +33,10 @@ interface ControllerInterface
 
     /**
      * @param string      $sAction
-     * @param Params|null $aGetParams
+     * @param array|null  $aGetParams
      *
      * @return ViewInterface
      */
-    public function runAction($sAction, Params $aGetParams = null);
+    public function runAction($sAction, array $aGetParams = null);
 
 }

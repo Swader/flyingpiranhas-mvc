@@ -2,8 +2,6 @@
 
 namespace flyingpiranhas\mvc\interfaces;
 
-use flyingpiranhas\common\http\Params;
-
 /**
  * @category       interfaces
  * @package        flyingpiranhas.mvc
@@ -43,11 +41,11 @@ interface ModuleInterface
     /**
      * @param string $sAction
      * @param string $sControllerName
-     * @param Params $aParams
+     * @param array  $aParams
      *
      * @return mixed
      */
-    public function findView($sAction, $sControllerName, Params $aParams = null);
+    public function findView($sAction, $sControllerName, array $aParams = null);
 
     /**
      * @param string $sModuleName

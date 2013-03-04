@@ -3,9 +3,7 @@
 namespace flyingpiranhas\mvc\controller\abstracts;
 
 use flyingpiranhas\common\http\interfaces\RequestInterface;
-use flyingpiranhas\mvc\exceptions\MvcException;
 use flyingpiranhas\mvc\interfaces\ModuleInterface;
-use flyingpiranhas\common\http\Params;
 use BadMethodCallException;
 use flyingpiranhas\common\http\Request;
 use flyingpiranhas\common\http\interfaces\ResponseInterface;
@@ -187,24 +185,24 @@ abstract class ControllerAbstract implements ControllerInterface
      * and the postDispatch, before sending the returned ViewModel to the buildViewModel method.
      *
      * @param string $sActionName the action method name
-     * @param Params $aGetParams  the action method params. If not provided, the GET params of the Request will be used
+     * @param array  $aGetParams  the action method params. If not provided, the GET params of the Request will be used
      *
      * @return ViewInterface
      * @throws ControllerException
      * @throws BadMethodCallException
      */
-    public function runAction($sActionName, Params $aGetParams = null)
+    public function runAction($sActionName, array $aGetParams = null)
     {
         $this->preDispatch();
 
         $sAction = $sActionName . 'Action';
 
         if ($aGetParams === null) {
-            $aGetParams = $this->getRequest()->getParams()->GET;
+            $aGetParams = $this->getRequest()->getParams()[Request::PARAM_TYPES_GET];
         }
 
         if (!method_exists($this, $sAction)) {
-            throw new BadMethodCallException('Action ' . $sActionName . ' does not exist in');
+            throw new BadMethodCallException('Action ' . $sActionName . ' does not exist in ' . get_class($this));
         }
 
         $rFunctionReference = new \ReflectionMethod($this, $sAction);
@@ -257,7 +255,7 @@ abstract class ControllerAbstract implements ControllerInterface
      */
     protected function getRequestMethod()
     {
-        return $this->getRequest()->getServer()->REQUEST_METHOD;
+        return $this->getRequest()->getServer()['REQUEST_METHOD'];
     }
 
     /**
@@ -323,11 +321,11 @@ abstract class ControllerAbstract implements ControllerInterface
         }
 
         if ($sCtype) {
-            $sFunction = 'ctype_'.$sCtype;
+            $sFunction = 'ctype_' . $sCtype;
             if (function_exists($sFunction)) {
                 $mValue = ($sFunction($mValue)) ? $mValue : $mDefault;
             } else {
-                throw new ControllerException('Ctype function '.$sFunction.'() not recognized.');
+                throw new ControllerException('Ctype function ' . $sFunction . '() not recognized.');
             }
         }
 

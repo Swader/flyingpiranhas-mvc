@@ -33,7 +33,7 @@ class ErrorHandler extends BaseErrorHandler
     public static $aCommonExceptions = array();
 
     /** @var Exception */
-    private $oException;
+    protected $oException;
 
     /** @var string */
     private $sAppEnv = '';
@@ -157,13 +157,13 @@ class ErrorHandler extends BaseErrorHandler
             $sView = $this->oException->getCode();
         }
         $sFullPath = $this->sErrorViewDir . '/' . $sView . '.php';
-        $e = $this->oException;
+
         if (is_readable($sFullPath)) {
             include $sFullPath;
         } else {
             exit(
-            'An error has occured, but you have no default error view template to display it.
-            Please create the following file: '.$sFullPath.'<br />For more information,
+                'An error has occured, but you have no default error view template to display it.
+            Please create the following file: ' . $sFullPath . '<br />For more information,
             see the mvc.ErrorHandler documentation online.');
         }
     }
